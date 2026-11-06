@@ -1,0 +1,16 @@
+[package]
+title = "Seres Super Factory Logistics Simulation"
+description = "NVIDIA Omniverse 3D Spatial & AnyLogic Discrete-Event Co-Simulation Extension for Seres Super Factory 40-Workstation GA Line"
+version = "1.0.0"
+authors = ["Antigravity & Seres Logistics Engineering Team"]
+repository = "https://github.com/liuyindyx/seres-omniverse-logistics-sim"
+category = "Simulation"
+keywords = ["omniverse", "digital-twin", "openusd", "physx", "logistics", "seres", "anylogic"]
+
+[dependencies]
+"omni.kit.uiapp" = {}
+"omni.usd" = {}
+"omni.physx" = {}
+
+[[python.module]]
+name = "omni.seres.logistics"

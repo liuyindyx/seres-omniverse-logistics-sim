@@ -1,0 +1,238 @@
+#usda 1.0
+(
+    defaultPrim = "Materials"
+    metersPerUnit = 1
+    upAxis = "Z"
+)
+
+def Scope "Materials"
+{
+    def Material "FloorEpoxyGray" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/FloorEpoxyGray/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.35
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.4
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.35, 0.38, 0.42)
+            float inputs:metallic = 0.3
+            float inputs:roughness = 0.45
+            token outputs:surface
+        }
+    }
+
+    def Material "FloorWalkwayGreen" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/FloorWalkwayGreen/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.38
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.45
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.15, 0.55, 0.32)
+            float inputs:metallic = 0.2
+            float inputs:roughness = 0.5
+            token outputs:surface
+        }
+    }
+
+    def Material "SteelColumnBlue" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/SteelColumnBlue/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.25
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.3
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.12, 0.35, 0.65)
+            float inputs:metallic = 0.8
+            float inputs:roughness = 0.25
+            token outputs:surface
+        }
+    }
+
+    def Material "ConveyorBeltRubber" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/ConveyorBeltRubber/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.65
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.75
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.1, 0.1, 0.12)
+            float inputs:metallic = 0.05
+            float inputs:roughness = 0.85
+            token outputs:surface
+        }
+    }
+
+    def Material "ConveyorSteelFrame" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/ConveyorSteelFrame/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.35
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.4
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.25, 0.28, 0.32)
+            float inputs:metallic = 0.75
+            float inputs:roughness = 0.3
+            token outputs:surface
+        }
+    }
+
+    def Material "SafetyYellowStripes" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/SafetyYellowStripes/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.35
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.4
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.95, 0.8, 0.05)
+            float inputs:metallic = 0.1
+            float inputs:roughness = 0.35
+            token outputs:surface
+        }
+    }
+
+    def Material "VehicleMetallicSilver" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/VehicleMetallicSilver/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.25
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.3
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.82, 0.85, 0.9)
+            float inputs:metallic = 0.9
+            float inputs:roughness = 0.15
+            token outputs:surface
+        }
+    }
+
+    def Material "VehicleDarkWindshield" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/VehicleDarkWindshield/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.15
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.2
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.05, 0.08, 0.12)
+            float inputs:metallic = 0.95
+            float inputs:roughness = 0.05
+            token outputs:surface
+        }
+    }
+
+    def Material "VehicleTireRubber" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/VehicleTireRubber/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.8
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.85
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.05, 0.05, 0.05)
+            float inputs:metallic = 0
+            float inputs:roughness = 0.9
+            token outputs:surface
+        }
+    }
+
+    def Material "AGVChassisTeal" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/AGVChassisTeal/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.3
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.35
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.1, 0.65, 0.75)
+            float inputs:metallic = 0.7
+            float inputs:roughness = 0.25
+            token outputs:surface
+        }
+    }
+
+    def Material "LidarLaserRed" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/LidarLaserRed/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.95, 0.05, 0.05)
+            float inputs:metallic = 0
+            float inputs:roughness = 0.1
+            token outputs:surface
+        }
+    }
+
+    def Material "CollisionHazardGlow" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/CollisionHazardGlow/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            color3f inputs:diffuseColor = (0.98, 0.15, 0.15)
+            float inputs:metallic = 0
+            float inputs:roughness = 0.1
+            token outputs:surface
+        }
+    }
+}
+

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>赛力斯龙兴超级工厂总装车间 40工位物流规划数字孪生</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 min-h-screen">
+
+  <!-- Header -->
+  <header class="mb-4 flex flex-wrap items-center justify-between border-b border-[var(--border)] pb-3">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center justify-center w-7 h-7 rounded-md bg-rose-600 text-white font-bold text-xs tracking-wider">AITO</span>
+        <h1 class="text-xl font-bold tracking-tight text-[var(--foreground)]">
+          赛力斯龙兴超级工厂总装车间 40 工位线边物流规划孪生系统
+        </h1>
+      </div>
+      <p class="text-xs text-[var(--muted-foreground)] mt-0.5">
+        双向验证大场景：NVIDIA Omniverse 几何把控（<span class="text-rose-400 font-medium">放得下？</span>）⟷ AnyLogic 离散事件排产（<span class="text-sky-400 font-medium">来得及？</span>）⟷ AI Agent 闭环治理
+      </p>
+    </div>
+
+    <!-- Quick Mode Badges -->
+    <div class="flex items-center gap-2 mt-2 sm:mt-0">
+      <div class="inline-flex rounded-lg border border-[var(--border)] p-0.5 bg-[var(--card)]">
+        <button id="tab-baseline" onclick="setMode('baseline')" class="px-3 py-1 text-xs rounded-md font-medium transition bg-rose-500/20 text-rose-400 border border-rose-500/30">
+          基准问题态 (Baseline)
+        </button>
+        <button id="tab-optimized" onclick="setMode('optimized')" class="px-3 py-1 text-xs rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition">
+          Agent 优化态 (Optimized)
+        </button>
+      </div>
+      <button id="btn-agent-solve" onclick="runAgentFullCycle()" class="px-3.5 py-1 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 font-semibold shadow flex items-center gap-1.5 transition">
+        <span>⚡ 触发 Agent 闭环调优</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI Top Row -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+    <!-- KPI 1 -->
+    <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium flex justify-between items-center">
+        <span>3D 空间检验：能不能放得下？</span>
+        <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-[var(--secondary)]">Omniverse / USD</span>
+      </div>
+      <div class="text-2xl font-bold mt-1 flex items-baseline gap-2" id="kpi-spatial-val">
+        <span class="text-rose-400">放不下 (91.2%)</span>
+      </div>
+      <div class="text-[12px] text-[var(--muted-foreground)] mt-0.5" id="kpi-spatial-sub">
+        承重立柱干涉: 5 处 | AGV通道侵占: 2 处
+      </div>
+    </div>
+
+    <!-- KPI 2 -->
+    <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium flex justify-between items-center">
+        <span>时序物流检验：能不能来得及？</span>
+        <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-[var(--secondary)]">AnyLogic DES</span>
+      </div>
+      <div class="text-2xl font-bold mt-1 flex items-baseline gap-2" id="kpi-logistics-val">
+        <span class="text-rose-400">来不及 (8,174 停线)</span>
+      </div>
+      <div class="text-[12px] text-[var(--muted-foreground)] mt-0.5" id="kpi-logistics-sub">
+        6台单车搬运 80种物料，吞吐缺口高达 85%
+      </div>
+    </div>
+
+    <!-- KPI 3 -->
+    <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium">产线节拍与生产效率</div>
+      <div class="text-2xl font-bold text-[var(--foreground)] mt-1 flex items-baseline gap-2" id="kpi-takt-val">
+        60s / 车 <span class="text-xs font-normal text-emerald-400">JPH: 60 台/小时</span>
+      </div>
+      <div class="text-[12px] text-[var(--muted-foreground)] mt-0.5" id="kpi-takt-sub">
+        主线全长: 280 米 | 40 工位连续流
+      </div>
+    </div>
+
+    <!-- KPI 4 -->
+    <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--card)]">
+      <div class="text-xs text-[var(--muted-foreground)] font-medium">AGV 车队配额与利用率</div>
+      <div class="text-2xl font-bold text-[var(--foreground)] mt-1 flex items-baseline gap-2" id="kpi-fleet-val">
+        6 台 <span class="text-xs font-normal text-amber-400">利用率 88.2%</span>
+      </div>
+      <div class="text-[12px] text-[var(--muted-foreground)] mt-0.5" id="kpi-fleet-sub">
+        供货模式: 单车点对点单箱配送
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Controls Bar -->
+  <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 mb-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div class="flex items-center gap-4 flex-wrap">
+      <div class="flex items-center gap-2">
+        <span class="font-medium text-[var(--muted-foreground)]">节拍时间 (Takt):</span>
+        <input type="range" id="slider-takt" min="45" max="90" value="60" oninput="updateTakt(this.value)" class="w-24 accent-sky-500 cursor-pointer">
+        <span id="label-takt" class="mono font-semibold text-[var(--foreground)]">60s</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="font-medium text-[var(--muted-foreground)]">AGV 车队规模:</span>
+        <input type="range" id="slider-fleet" min="6" max="40" step="2" value="6" oninput="updateFleet(this.value)" class="w-28 accent-emerald-500 cursor-pointer">
+        <span id="label-fleet" class="mono font-semibold text-[var(--foreground)]">6台</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="font-medium text-[var(--muted-foreground)]">供料模式:</span>
+        <select id="select-mode" onchange="onSupplyModeChange(this.value)" class="bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] rounded px-2 py-1 font-medium">
+          <option value="single">单车点对点单箱 (Baseline)</option>
+          <option value="milkrun">三区次级超市 + 牵引水蜘蛛列车 (Optimized)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span class="text-[var(--muted-foreground)]">工位范围: 40 工位 (Trim-1, Trim-2, Chassis, Final)</span>
+      <button onclick="resetConveyor()" class="px-2.5 py-1 rounded bg-[var(--secondary)] hover:opacity-80 transition text-[var(--foreground)]">
+        重置动画
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Viewports Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    
+    <!-- 2.5D Canvas Viewport (2 Cols) -->
+    <div class="lg:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--card)] flex flex-col overflow-hidden">
+      <div class="p-3 border-b border-[var(--border)] flex items-center justify-between bg-black/10">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-sm font-semibold text-[var(--foreground)]">40工位主装配流水线数字孪生俯视透视态 (280m 全景)</span>
+        </div>
+        <div class="text-xs text-[var(--muted-foreground)] mono flex items-center gap-2">
+          <span>滚动查看 1~40 工位</span>
+          <span class="px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--foreground)]">1:1 精确米制</span>
+        </div>
+      </div>
+
+      <!-- Canvas Container -->
+      <div class="relative flex-1 min-h-[460px] bg-slate-950 flex items-center justify-center p-2 overflow-x-auto">
+        <canvas id="factoryCanvas" width="980" height="460" class="rounded-lg shadow-inner cursor-crosshair"></canvas>
+
+        <!-- Canvas Legend & Station Inspector Overlay -->
+        <div class="absolute bottom-4 left-4 p-2.5 rounded-lg bg-black/75 backdrop-blur border border-white/10 text-xs text-slate-300 space-y-1 pointer-events-none">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-blue-500"></span> 280米板链输送带 (车身 60s 流水节拍)</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-emerald-500"></span> 正常线边料架 (库存充足)</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-amber-500"></span> 补料中 (Kanban 触发)</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-rose-500"></span> 缺料停线 (Starvation Alert)</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-cyan-400"></span> 厂房承重立柱 ($18\text{m} \times 12\text{m}$ 柱网)</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded border border-rose-500 animate-ping"></span> 空间干涉碰撞点 (Collision Box)</div>
+        </div>
+
+        <div id="inspector-card" class="absolute top-4 right-4 p-3 rounded-lg bg-slate-900/90 backdrop-blur border border-sky-500/40 text-xs text-slate-200 max-w-xs shadow-xl hidden">
+          <div class="font-bold text-sky-400 border-b border-white/10 pb-1 mb-1.5 flex justify-between">
+            <span id="inspect-title">工位详情</span>
+            <span id="inspect-zone" class="mono text-slate-400 text-[10px]"></span>
+          </div>
+          <div class="space-y-1 text-[11px]" id="inspect-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Scenegraph & Agent Log (1 Col) -->
+    <div class="flex flex-col gap-4">
+      
+      <!-- OpenUSD Prim Tree Inspector -->
+      <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3.5 flex flex-col flex-1">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)]">
+          <span class="text-sm font-semibold text-[var(--foreground)]">OpenUSD 场景树 (Scenegraph)</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--muted-foreground)] mono">seres_ga_stage.usda</span>
+        </div>
+        <div class="space-y-1 text-xs mono text-[var(--muted-foreground)] overflow-y-auto max-h-[175px] pr-1" id="usd-tree">
+          <div class="text-rose-400 font-medium">def Xform "SeresFactory"</div>
+          <div class="pl-2">├── def PhysicsScene "PhysicsScene" [g=9.81m/s²]</div>
+          <div class="pl-2">├── def "BuildingColumns" (Col_0_p4 ~ Col_288_n4)</div>
+          <div class="pl-2">├── def Xform "MainAssemblyLine" [Length: 280m]</div>
+          <div class="pl-4">├── def "Station_01" (Trim-1: 低压线束 / 隔音棉)</div>
+          <div class="pl-4">├── def "Station_16" (<span id="usd-st16" class="text-rose-400">座椅料架 - 与 Col_108 碰撞!</span>)</div>
+          <div class="pl-4">├── def "Station_21" (<span id="usd-st21" class="text-rose-400">副车架 - 与 Col_144 碰撞!</span>)</div>
+          <div class="pl-4">├── def "Station_24" (<span id="usd-st24" class="text-rose-400">电池包 - 侵占 AGV 走廊 0.3m!</span>)</div>
+          <div class="pl-4">├── def "Station_34" (<span id="usd-st34" class="text-rose-400">车门分装 - 与 Col_234 碰撞!</span>)</div>
+          <div class="pl-4">└── def "Station_40" (Final: 终检合格出车)</div>
+          <div class="pl-2">└── def "LogisticsSupermarket" (SPS / ASRS 立体库)</div>
+        </div>
+      </div>
+
+      <!-- Agent Autonomous Reasoning Terminal -->
+      <div class="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3.5 flex flex-col flex-1">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)]">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-sm font-semibold text-[var(--foreground)]">Agent 跨域协同推理终端</span>
+          </div>
+          <span class="text-[12px] text-emerald-400 mono">Seres-Agent (MCP)</span>
+        </div>
+        <div id="terminal-logs" class="mono text-xs text-slate-300 bg-black/60 p-2.5 rounded-lg space-y-1.5 overflow-y-auto max-h-[190px]">
+          <div class="text-slate-400">> 赛力斯超级工厂 40 工位仿真模型初始化就绪。</div>
+          <div class="text-rose-400 font-semibold">> [Omniverse 诊断] 发现 5 处立柱几何重叠，2 处通道违规侵占！</div>
+          <div class="text-amber-400 font-semibold">> [AnyLogic 诊断] 6台AGV运力崩溃，缺料停线 8,174 次！</div>
+          <div class="text-sky-300">> 提示：点击上方“⚡ 触发 Agent 闭环调优”一键重构！</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Deep Architecture Comparison Table -->
+  <div class="mt-4 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+    <h3 class="text-sm font-bold text-[var(--foreground)] mb-2 flex items-center gap-2">
+      <span>📊 赛力斯总装车间物流规划：“放得下”与“来得及”多目标优化决议</span>
+    </h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)]">
+            <th class="py-2 px-3 font-semibold">核心工程命题</th>
+            <th class="py-2 px-3 font-semibold text-rose-400">基准初始状态 (Baseline)</th>
+            <th class="py-2 px-3 font-semibold text-emerald-400">Agent 协同优化后 (Optimized)</th>
+            <th class="py-2 px-3 font-semibold text-sky-400">工业工程实现机理 (How It Works)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--border)] text-[var(--foreground)]">
+          <tr>
+            <td class="py-2.5 px-3 font-medium text-[var(--muted-foreground)]">【放得下？】承重柱干涉</td>
+            <td class="py-2.5 px-3 text-rose-400 font-semibold">5 处立柱严重重叠穿透</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-semibold">0 处干涉 (100% 避让)</td>
+            <td class="py-2.5 px-3">在 7.0m 工位节距内沿 X 轴偏移 +1.8m，在 OpenUSD 重新生成合规网格。</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 px-3 font-medium text-[var(--muted-foreground)]">【放得下？】AGV走廊安全宽度</td>
+            <td class="py-2.5 px-3 text-rose-400 font-semibold">净距仅 0.3m (ISO 3691-4 违规)</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-semibold">净距 0.65m ~ 0.85m (合规)</td>
+            <td class="py-2.5 px-3">电池包与轮胎改用高密度立式双层流利架，料架深度由 2.0m 压缩至 1.35m。</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 px-3 font-medium text-[var(--muted-foreground)]">【来得及？】缺料停线次数</td>
+            <td class="py-2.5 px-3 text-rose-400 font-semibold">8,174 次停线 (产线彻底瘫痪)</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-semibold">0 次停线 (100% 顺畅交付)</td>
+            <td class="py-2.5 px-3">部署 36 台 AGV 牵引列车 (1 拖 4) + 自动化滚筒对接 (卸料由 40s 缩至 12s)。</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 px-3 font-medium text-[var(--muted-foreground)]">【来得及？】仓储与搬运运距</td>
+            <td class="py-2.5 px-3 text-amber-400 font-semibold">单主库运距 180m，往返 170s</td>
+            <td class="py-2.5 px-3 text-emerald-400 font-semibold">三区 SPS 次级超市，运距缩短 60%</td>
+            <td class="py-2.5 px-3">在 70m(内饰)、175m(底盘)、245m(终装) 设置线边随行配餐超市，就近供料。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Canvas & State Management
+    const canvas = document.getElementById('factoryCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let currentMode = 'baseline'; // 'baseline' or 'optimized'
+    let currentTakt = 60;
+    let currentFleet = 6;
+    let animOffset = 0;
+
+    // Simulated 40 stations summary data
+    const STATIONS = [];
+    for (let i = 1; i <= 40; i++) {
+      let zone = i <= 10 ? 'Trim-1' : (i <= 20 ? 'Trim-2' : (i <= 30 ? 'Chassis' : 'Final'));
+      let name = i === 16 ? '二排独立座椅工位' : 
+                (i === 21 ? '前副车架合装工位' : 
+                (i === 24 ? '动力电池整体拧紧工位' : 
+                (i === 32 ? '轮毂轮胎拧紧工位' : 
+                (i === 34 ? '车门分装接驳工位' : `总装工位-${String(i).padStart(2, '0')}`))));
+      STATIONS.push({
+        id: i,
+        zone: zone,
+        name: name,
+        posX: (i - 1) * 22 + 40,
+        hasColCollision: (i === 16 || i === 21 || i === 34),
+        hasAGVEncroach: (i === 24 || i === 32),
+        stockLeft: currentMode === 'baseline' ? (i % 3 === 0 ? 0 : 2) : 5,
+        stockRight: currentMode === 'baseline' ? (i % 4 === 0 ? 0 : 3) : 6
+      });
+    }
+
+    function renderFactory() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Floor Grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      // 1. Building Columns Grid (18m x 12m)
+      ctx.fillStyle = '#38bdf8';
+      for (let x = 50; x < 950; x += 55) {
+        for (let y of [110, 160, 260, 310]) {
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // 2. Main Assembly Conveyor Belt (Length 280m, represented horizontally)
+      const beltY = 200;
+      const beltH = 34;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(20, beltY, 940, beltH);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, beltY, 940, beltH);
+
+      // Moving pallets on conveyor
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      for (let x = 25 + (animOffset % 22); x < 950; x += 22) {
+        ctx.beginPath(); ctx.moveTo(x, beltY); ctx.lineTo(x, beltY + beltH); ctx.stroke();
+      }
+
+      // 3. Vehicles moving along conveyor
+      for (let i = 0; i < 40; i++) {
+        const cx = 35 + i * 22;
+        // Vehicle Body
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(cx - 8, beltY + 5, 16, 24);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(cx - 5, beltY + 8, 10, 18);
+      }
+
+      // 4. Line-side Racks (Left side top: y=168, Right side bottom: y=242)
+      STATIONS.forEach((st, idx) => {
+        const rx = currentMode === 'optimized' && st.hasColCollision ? st.posX + 8 : st.posX;
+        
+        // --- Left Rack (North) ---
+        const lDepth = currentMode === 'optimized' && st.hasAGVEncroach ? 10 : (st.hasAGVEncroach ? 20 : 13);
+        const lY = beltY - 6 - lDepth;
+        
+        ctx.fillStyle = (currentMode === 'baseline' && st.stockLeft === 0) ? '#f43f5e' : (currentMode === 'baseline' && st.hasColCollision ? '#f59e0b' : '#10b981');
+        ctx.fillRect(rx - 7, lY, 14, lDepth);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(rx - 7, lY, 14, lDepth);
+
+        // Highlight Baseline Collisions
+        if (currentMode === 'baseline') {
+          if (st.hasColCollision) {
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(rx, lY + (lDepth / 2), 12, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          if (st.hasAGVEncroach) {
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(rx - 9, lY - 4, 18, lDepth + 8);
+          }
+        }
+
+        // --- Right Rack (South) ---
+        const rDepth = currentMode === 'optimized' && st.hasAGVEncroach ? 10 : (st.hasAGVEncroach ? 20 : 13);
+        const rY = beltY + beltH + 6;
+        
+        ctx.fillStyle = (currentMode === 'baseline' && st.stockRight === 0) ? '#f43f5e' : '#10b981';
+        ctx.fillRect(rx - 7, rY, 14, rDepth);
+        ctx.strokeRect(rx - 7, rY, 14, rDepth);
+      });
+
+      // 5. AGV Logistics Highways (North y=130, South y=285)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+      ctx.setLineDash([6, 6]);
+      ctx.strokeRect(30, 125, 920, 22); // North
+      ctx.strokeRect(30, 285, 920, 22); // South
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.7)';
+      ctx.font = '10px monospace';
+      ctx.fillText('AGV 北主干道 (North Highway) - 3.2m', 40, 140);
+      ctx.fillText('AGV 南主干道 (South Highway) - 3.2m', 40, 300);
+
+      // 6. Supermarket & ASRS Areas
+      if (currentMode === 'optimized') {
+        // Zoned 3 Supermarkets
+        drawSupermarket(120, 350, 160, 40, '内饰 SPS 次级超市 (Trim SPS)');
+        drawSupermarket(440, 350, 160, 40, '底盘 ASRS 立体库 (Chassis ASRS)');
+        drawSupermarket(740, 350, 160, 40, '终装 SPS 随行配餐超市 (Final SPS)');
+      } else {
+        // Single central warehouse
+        drawSupermarket(400, 350, 220, 45, '集中式高架立体库 (AS/RS)');
+      }
+
+      // 7. Moving AGVs
+      const agvSpeed = (currentTakt / 60) * 1.5;
+      for (let i = 0; i < currentFleet; i++) {
+        const agvProg = ((animOffset * 0.8 + i * 140) % 900) + 40;
+        const agvY = (i % 2 === 0) ? 136 : 296;
+        
+        ctx.fillStyle = currentMode === 'optimized' ? '#38bdf8' : '#a855f7';
+        ctx.fillRect(agvProg, agvY - 4, 16, 10);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(agvProg, agvY - 4, 16, 10);
+
+        if (currentMode === 'optimized') {
+          // Towing trailers
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(agvProg - 9, agvY - 3, 7, 8);
+          ctx.fillRect(agvProg - 18, agvY - 3, 7, 8);
+          ctx.fillRect(agvProg - 27, agvY - 3, 7, 8);
+        }
+      }
+
+      // Zone Dividers & Labels
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.setLineDash([3, 3]);
+      [250, 470, 690].forEach(zx => {
+        ctx.beginPath(); ctx.moveTo(zx, 100); ctx.lineTo(zx, 330); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('【Trim-1 内饰一段】', 80, 95);
+      ctx.fillText('【Trim-2 内饰二段】', 300, 95);
+      ctx.fillText('【Chassis 底盘合装】', 520, 95);
+      ctx.fillText('【Final 终装与OK线】', 750, 95);
+
+      animOffset += 0.5;
+      requestAnimationFrame(renderFactory);
+    }
+
+    function drawSupermarket(x, y, w, h, label) {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText(label, x + 8, y + 24);
+    }
+
+    renderFactory();
+
+    // Mode Setting
+    function setMode(mode) {
+      currentMode = mode;
+      const bBtn = document.getElementById('tab-baseline');
+      const oBtn = document.getElementById('tab-optimized');
+      
+      if (mode === 'baseline') {
+        bBtn.className = 'px-3 py-1 text-xs rounded-md font-medium transition bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        oBtn.className = 'px-3 py-1 text-xs rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition';
+        currentFleet = 6;
+        document.getElementById('slider-fleet').value = 6;
+        document.getElementById('label-fleet').textContent = '6台';
+        document.getElementById('select-mode').value = 'single';
+
+        // Update KPIs
+        document.getElementById('kpi-spatial-val').innerHTML = '<span class="text-rose-400">放不下 (91.2%)</span>';
+        document.getElementById('kpi-spatial-sub').textContent = '承重立柱干涉: 5 处 | AGV通道侵占: 2 处';
+        document.getElementById('kpi-logistics-val').innerHTML = '<span class="text-rose-400">来不及 (8,174 停线)</span>';
+        document.getElementById('kpi-logistics-sub').textContent = '6台单车搬运 80种物料，吞吐缺口高达 85%';
+        document.getElementById('kpi-fleet-val').innerHTML = '6 台 <span class="text-xs font-normal text-amber-400">利用率 88.2%</span>';
+        document.getElementById('kpi-fleet-sub').textContent = '供货模式: 单车点对点单箱配送';
+
+        // USD Tree highlights
+        document.getElementById('usd-st16').className = 'text-rose-400';
+        document.getElementById('usd-st16').textContent = '座椅料架 - 与 Col_108 碰撞!';
+        document.getElementById('usd-st21').className = 'text-rose-400';
+        document.getElementById('usd-st21').textContent = '副车架 - 与 Col_144 碰撞!';
+        document.getElementById('usd-st24').className = 'text-rose-400';
+        document.getElementById('usd-st24').textContent = '电池包 - 侵占 AGV 走廊 0.3m!';
+        document.getElementById('usd-st34').className = 'text-rose-400';
+        document.getElementById('usd-st34').textContent = '车门分装 - 与 Col_234 碰撞!';
+      } else {
+        oBtn.className = 'px-3 py-1 text-xs rounded-md font-medium transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        bBtn.className = 'px-3 py-1 text-xs rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition';
+        currentFleet = 36;
+        document.getElementById('slider-fleet').value = 36;
+        document.getElementById('label-fleet').textContent = '36台';
+        document.getElementById('select-mode').value = 'milkrun';
+
+        // Update KPIs
+        document.getElementById('kpi-spatial-val').innerHTML = '<span class="text-emerald-400">100% 放得下</span>';
+        document.getElementById('kpi-spatial-sub').textContent = '承重立柱干涉: 0 处 | AGV通道净距: ≥0.65m';
+        document.getElementById('kpi-logistics-val').innerHTML = '<span class="text-emerald-400">100% 来得及 (0 停线)</span>';
+        document.getElementById('kpi-logistics-sub').textContent = '36台牵引列车循环 Milk Run，准时交付率 100%';
+        document.getElementById('kpi-fleet-val').innerHTML = '36 台 <span class="text-xs font-normal text-emerald-400">利用率 93.7%</span>';
+        document.getElementById('kpi-fleet-sub').textContent = '供货模式: 三区次级超市 + 1拖4水蜘蛛牵引';
+
+        // USD Tree highlights
+        document.getElementById('usd-st16').className = 'text-emerald-400';
+        document.getElementById('usd-st16').textContent = '座椅料架 - X+1.8m 避柱合格';
+        document.getElementById('usd-st21').className = 'text-emerald-400';
+        document.getElementById('usd-st21').textContent = '副车架 - X+1.8m 避柱合格';
+        document.getElementById('usd-st24').className = 'text-emerald-400';
+        document.getElementById('usd-st24').textContent = '电池包 - 双层立式料架 (净距 0.72m)';
+        document.getElementById('usd-st34').className = 'text-emerald-400';
+        document.getElementById('usd-st34').textContent = '车门分装 - 避柱与滚筒对接合格';
+      }
+    }
+
+    function updateTakt(val) {
+      currentTakt = parseInt(val);
+      document.getElementById('label-takt').textContent = val + 's';
+      const jph = Math.round(3600 / currentTakt);
+      document.getElementById('kpi-takt-val').innerHTML = `${val}s / 车 <span class="text-xs font-normal text-emerald-400">JPH: ${jph} 台/小时</span>`;
+    }
+
+    function updateFleet(val) {
+      currentFleet = parseInt(val);
+      document.getElementById('label-fleet').textContent = val + '台';
+      document.getElementById('kpi-fleet-val').innerHTML = `${val} 台 <span class="text-xs font-normal text-sky-400">动态调节</span>`;
+    }
+
+    function onSupplyModeChange(val) {
+      setMode(val === 'single' ? 'baseline' : 'optimized');
+    }
+
+    function resetConveyor() {
+      animOffset = 0;
+    }
+
+    // Agent Full Cycle Automation
+    function runAgentFullCycle() {
+      const term = document.getElementById('terminal-logs');
+      function addLog(text, color) {
+        const div = document.createElement('div');
+        div.className = color ? color : 'text-slate-300';
+        div.textContent = '> ' + text;
+        term.appendChild(div);
+        term.scrollTop = term.scrollHeight;
+      }
+
+      addLog('启动 SeresLogisticsPlanningAgent 双向协同调优...', 'text-emerald-400 font-bold');
+      
+      setTimeout(() => {
+        addLog('Omniverse 空间干涉诊断：工位 16、21、34 碰撞立柱，工位 24、32 侵占走廊。', 'text-yellow-400');
+      }, 500);
+
+      setTimeout(() => {
+        addLog('OpenUSD 场景自动重构：为干涉料架注入 X 轴 +1.8m 避柱位移...', 'text-yellow-400');
+        addLog('电池包与轮胎切换为悬臂立式料架，深度由 2.0m 压缩至 1.35m。', 'text-sky-300');
+      }, 1100);
+
+      setTimeout(() => {
+        addLog('AnyLogic 离散排产分析：单车搬运难以满足 60s 节拍 80 件消耗需求。', 'text-yellow-400');
+        addLog('部署三区线边超市 (Trim 70m / Chassis 175m / Final 245m)，运距缩短 60%。', 'text-sky-300');
+        addLog('升级为 36 台 AGV 牵引列车 (1 拖 4) 循环 Milk Run 配送。', 'text-sky-300');
+      }, 1800);
+
+      setTimeout(() => {
+        addLog('二次双向仿真验收：', 'text-emerald-400 font-bold');
+        addLog('  * 几何检验：立柱干涉 0，通道侵占 0 ->【100% 放得下】', 'text-emerald-400');
+        addLog('  * 物流检验：缺料停线 0 次，车队利用率 93.7% ->【100% 来得及】', 'text-emerald-400');
+        setMode('optimized');
+      }, 2500);
+    }
+
+    // Canvas Click Interaction: Show Station Details
+    canvas.addEventListener('click', function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      let found = null;
+      STATIONS.forEach(st => {
+        if (Math.abs(clickX - st.posX) < 14 && clickY >= 140 && clickY <= 280) {
+          found = st;
+        }
+      });
+
+      const card = document.getElementById('inspector-card');
+      if (found) {
+        document.getElementById('inspect-title').textContent = `工位 ${String(found.id).padStart(2, '0')}: ${found.name}`;
+        document.getElementById('inspect-zone').textContent = found.zone;
+        document.getElementById('inspect-body').innerHTML = `
+          <div><strong>X 坐标:</strong> ${found.posX.toFixed(1)}m (沿 280m 主线)</div>
+          <div><strong>空间碰撞检测:</strong> ${found.hasColCollision ? (currentMode === 'baseline' ? '<span class="text-rose-400 font-bold">与承重柱干涉 ⚠</span>' : '<span class="text-emerald-400">已避柱合格 ✓</span>') : '<span class="text-emerald-400">空间安全 ✓</span>'}</div>
+          <div><strong>通道安全净距:</strong> ${found.hasAGVEncroach ? (currentMode === 'baseline' ? '<span class="text-rose-400 font-bold">0.30m (违规侵占)</span>' : '<span class="text-emerald-400">0.72m (合规)</span>') : '0.85m (合规)'}</div>
+          <div><strong>左侧料架库存:</strong> ${found.stockLeft} 辆份 (${found.stockLeft === 0 ? '<span class="text-rose-400 font-bold">缺料停线!</span>' : '充足'})</div>
+          <div><strong>右侧料架库存:</strong> ${found.stockRight} 辆份 (${found.stockRight === 0 ? '<span class="text-rose-400 font-bold">缺料停线!</span>' : '充足'})</div>
+        `;
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
