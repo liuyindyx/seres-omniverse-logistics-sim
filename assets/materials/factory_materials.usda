@@ -12,16 +12,19 @@ def Scope "Materials"
     )
     {
         token outputs:surface.connect = </Materials/FloorEpoxyGray/PbrShader.outputs:surface>
-        float physics:dynamicFriction = 0.35
+        float physics:dynamicFriction = 0.4
         float physics:restitution = 0.15
-        float physics:staticFriction = 0.4
+        float physics:staticFriction = 0.45
 
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.35, 0.38, 0.42)
-            float inputs:metallic = 0.3
-            float inputs:roughness = 0.45
+            float inputs:clearcoat = 0.4
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.22, 0.25, 0.29)
+            float inputs:metallic = 0.15
+            float inputs:opacity = 1
+            float inputs:roughness = 0.28
             token outputs:surface
         }
     }
@@ -31,16 +34,42 @@ def Scope "Materials"
     )
     {
         token outputs:surface.connect = </Materials/FloorWalkwayGreen/PbrShader.outputs:surface>
-        float physics:dynamicFriction = 0.38
+        float physics:dynamicFriction = 0.42
         float physics:restitution = 0.15
-        float physics:staticFriction = 0.45
+        float physics:staticFriction = 0.5
 
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.15, 0.55, 0.32)
+            float inputs:clearcoat = 0.2
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.12, 0.52, 0.3)
+            float inputs:metallic = 0.1
+            float inputs:opacity = 1
+            float inputs:roughness = 0.45
+            token outputs:surface
+        }
+    }
+
+    def Material "FloorAGVLaneBlue" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/FloorAGVLaneBlue/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.4
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.48
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.3
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.08, 0.32, 0.48)
+            color3f inputs:emissiveColor = (0, 0.04, 0.08)
             float inputs:metallic = 0.2
-            float inputs:roughness = 0.5
+            float inputs:opacity = 1
+            float inputs:roughness = 0.32
             token outputs:surface
         }
     }
@@ -50,16 +79,19 @@ def Scope "Materials"
     )
     {
         token outputs:surface.connect = </Materials/SteelColumnBlue/PbrShader.outputs:surface>
-        float physics:dynamicFriction = 0.25
+        float physics:dynamicFriction = 0.28
         float physics:restitution = 0.15
-        float physics:staticFriction = 0.3
+        float physics:staticFriction = 0.35
 
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.12, 0.35, 0.65)
-            float inputs:metallic = 0.8
-            float inputs:roughness = 0.25
+            float inputs:clearcoat = 0.1
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.14, 0.38, 0.68)
+            float inputs:metallic = 0.82
+            float inputs:opacity = 1
+            float inputs:roughness = 0.24
             token outputs:surface
         }
     }
@@ -76,9 +108,12 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.1, 0.1, 0.12)
+            float inputs:clearcoat = 0
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.09, 0.1, 0.12)
             float inputs:metallic = 0.05
-            float inputs:roughness = 0.85
+            float inputs:opacity = 1
+            float inputs:roughness = 0.82
             token outputs:surface
         }
     }
@@ -95,9 +130,12 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.25, 0.28, 0.32)
-            float inputs:metallic = 0.75
-            float inputs:roughness = 0.3
+            float inputs:clearcoat = 0.1
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.26, 0.29, 0.34)
+            float inputs:metallic = 0.78
+            float inputs:opacity = 1
+            float inputs:roughness = 0.28
             token outputs:surface
         }
     }
@@ -114,9 +152,13 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.95, 0.8, 0.05)
-            float inputs:metallic = 0.1
-            float inputs:roughness = 0.35
+            float inputs:clearcoat = 0.2
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.96, 0.78, 0.05)
+            color3f inputs:emissiveColor = (0.08, 0.06, 0)
+            float inputs:metallic = 0.15
+            float inputs:opacity = 1
+            float inputs:roughness = 0.32
             token outputs:surface
         }
     }
@@ -133,9 +175,12 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.82, 0.85, 0.9)
-            float inputs:metallic = 0.9
-            float inputs:roughness = 0.15
+            float inputs:clearcoat = 0.95
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.78, 0.83, 0.89)
+            float inputs:metallic = 0.88
+            float inputs:opacity = 1
+            float inputs:roughness = 0.14
             token outputs:surface
         }
     }
@@ -152,9 +197,12 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.05, 0.08, 0.12)
-            float inputs:metallic = 0.95
-            float inputs:roughness = 0.05
+            float inputs:clearcoat = 1
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.05, 0.09, 0.15)
+            float inputs:metallic = 0.9
+            float inputs:opacity = 0.42
+            float inputs:roughness = 0.04
             token outputs:surface
         }
     }
@@ -171,9 +219,146 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.05, 0.05, 0.05)
+            float inputs:clearcoat = 0
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.06, 0.06, 0.07)
+            float inputs:metallic = 0.02
+            float inputs:opacity = 1
+            float inputs:roughness = 0.88
+            token outputs:surface
+        }
+    }
+
+    def Material "AlloyRimSilver" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/AlloyRimSilver/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.25
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.3
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.5
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.85, 0.88, 0.92)
+            float inputs:metallic = 0.92
+            float inputs:opacity = 1
+            float inputs:roughness = 0.16
+            token outputs:surface
+        }
+    }
+
+    def Material "VehicleStarRingLED" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/VehicleStarRingLED/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.15
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.2
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.5
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.92, 0.97, 1)
+            color3f inputs:emissiveColor = (0.85, 0.95, 1)
             float inputs:metallic = 0
-            float inputs:roughness = 0.9
+            float inputs:opacity = 1
+            float inputs:roughness = 0.08
+            token outputs:surface
+        }
+    }
+
+    def Material "VehicleTailLightLED" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/VehicleTailLightLED/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.15
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.2
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.5
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.98, 0.12, 0.15)
+            color3f inputs:emissiveColor = (0.95, 0.08, 0.1)
+            float inputs:metallic = 0
+            float inputs:opacity = 1
+            float inputs:roughness = 0.08
+            token outputs:surface
+        }
+    }
+
+    def Material "RackFrameBlue" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/RackFrameBlue/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.32
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.38
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.1
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.16, 0.42, 0.72)
+            float inputs:metallic = 0.75
+            float inputs:opacity = 1
+            float inputs:roughness = 0.28
+            token outputs:surface
+        }
+    }
+
+    def Material "RollerTrackAluminum" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/RollerTrackAluminum/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.15
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.2
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.2
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.76, 0.79, 0.83)
+            float inputs:metallic = 0.88
+            float inputs:opacity = 1
+            float inputs:roughness = 0.22
+            token outputs:surface
+        }
+    }
+
+    def Material "RobotOrange" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/RobotOrange/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0.3
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0.35
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0.6
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.95, 0.42, 0.06)
+            float inputs:metallic = 0.65
+            float inputs:opacity = 1
+            float inputs:roughness = 0.24
             token outputs:surface
         }
     }
@@ -190,9 +375,13 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.1, 0.65, 0.75)
-            float inputs:metallic = 0.7
-            float inputs:roughness = 0.25
+            float inputs:clearcoat = 0.5
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.08, 0.68, 0.78)
+            color3f inputs:emissiveColor = (0, 0.05, 0.08)
+            float inputs:metallic = 0.72
+            float inputs:opacity = 1
+            float inputs:roughness = 0.22
             token outputs:surface
         }
     }
@@ -209,8 +398,12 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.95, 0.05, 0.05)
+            float inputs:clearcoat = 0
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.95, 0.08, 0.08)
+            color3f inputs:emissiveColor = (0.9, 0.05, 0.05)
             float inputs:metallic = 0
+            float inputs:opacity = 0.35
             float inputs:roughness = 0.1
             token outputs:surface
         }
@@ -228,8 +421,35 @@ def Scope "Materials"
         def Shader "PbrShader"
         {
             uniform token info:id = "UsdPreviewSurface"
-            color3f inputs:diffuseColor = (0.98, 0.15, 0.15)
+            float inputs:clearcoat = 0
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.98, 0.12, 0.12)
+            color3f inputs:emissiveColor = (0.95, 0.1, 0.1)
             float inputs:metallic = 0
+            float inputs:opacity = 0.38
+            float inputs:roughness = 0.1
+            token outputs:surface
+        }
+    }
+
+    def Material "EncroachmentAmberGlow" (
+        prepend apiSchemas = ["PhysicsMaterialAPI"]
+    )
+    {
+        token outputs:surface.connect = </Materials/EncroachmentAmberGlow/PbrShader.outputs:surface>
+        float physics:dynamicFriction = 0
+        float physics:restitution = 0.15
+        float physics:staticFriction = 0
+
+        def Shader "PbrShader"
+        {
+            uniform token info:id = "UsdPreviewSurface"
+            float inputs:clearcoat = 0
+            float inputs:clearcoatRoughness = 0.08
+            color3f inputs:diffuseColor = (0.98, 0.52, 0.05)
+            color3f inputs:emissiveColor = (0.95, 0.45, 0.05)
+            float inputs:metallic = 0
+            float inputs:opacity = 0.38
             float inputs:roughness = 0.1
             token outputs:surface
         }

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import sys
+if sys.platform == 'win32' and hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 """
 Standalone Co-Simulation Runner for Seres Super Factory Logistics
 ==================================================================
@@ -28,12 +32,12 @@ from simulation.agent_orchestrator import SeresLogisticsPlanningAgent
 def print_banner():
     print("=" * 88)
     print("  SERES SUPER FACTORY (CHONGQING) - AITO M9/M7 GA WORKSHOP DIGITAL TWIN")
-    print("  NVIDIA Omniverse 3D Spatial Rigor ⨉ AnyLogic Discrete-Event Logistics Co-Simulation")
+    print("  NVIDIA Omniverse 3D Spatial Rigor x AnyLogic Discrete-Event Logistics Co-Simulation")
     print("=" * 88)
     print(f"  • Factory: {WORKSHOP_SPECS['factory_name']}")
     print(f"  • Workshop: {WORKSHOP_SPECS['workshop']} | Target: {WORKSHOP_SPECS['vehicle_model']}")
     print(f"  • Assembly Line: 40 Workstations | Length: {WORKSHOP_SPECS['line_length_m']}m | Takt: {WORKSHOP_SPECS['takt_time_sec']}s (60 JPH)")
-    print(f"  • Building Grid: 18m X-Pitch ⨉ 24m Y-Pitch | ISO 3691-4 AGV Min Clearance: {WORKSHOP_SPECS['min_iso_safety_clearance_m']}m")
+    print(f"  • Building Grid: 18m X-Pitch x 24m Y-Pitch | ISO 3691-4 AGV Min Clearance: {WORKSHOP_SPECS['min_iso_safety_clearance_m']}m")
     print("=" * 88)
 
 

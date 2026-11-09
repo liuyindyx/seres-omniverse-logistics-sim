@@ -39,3 +39,8 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+# Video build scratch
+docs/video_assets/*.wav
+docs/video_assets/*.mp3
+docs/video_assets/concat_wavs.txt

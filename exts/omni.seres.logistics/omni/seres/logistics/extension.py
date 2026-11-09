@@ -47,11 +47,9 @@ class SeresLogisticsExtension(omni.ext.IExt):
 
     def _locate_project_root(self) -> str:
         """Find the root path containing assets/ and simulation/."""
-        # Check current directory first
         cwd = os.getcwd()
         if os.path.exists(os.path.join(cwd, "assets", "stages")):
             return cwd
-        # Check relative to this file
         current_file_dir = os.path.dirname(os.path.abspath(__file__))
         cand = os.path.abspath(os.path.join(current_file_dir, "../../../../"))
         if os.path.exists(os.path.join(cand, "assets", "stages")):
@@ -164,11 +162,11 @@ class SeresLogisticsExtension(omni.ext.IExt):
                     style={"color": 0xFFCCCCCC, "font_size": 12}
                 )
                 with ui.HStack(spacing=6):
-                    ui.Button("厂房全景俯瞰", clicked_fn=lambda: self.switch_camera("/World/Cameras/Cam_Overview"), height=32)
-                    ui.Button("工位16(座椅装配)", clicked_fn=lambda: self.switch_camera("/World/Cameras/Cam_Station_16"), height=32)
+                    ui.Button("厂房全景俯瞰", clicked_fn=lambda: self.switch_camera("/World/Cameras/GA_Line_Overview_Isometric"), height=32)
+                    ui.Button("工位16(座椅装配)", clicked_fn=lambda: self.switch_camera("/World/Cameras/Station_16_Seat_Hazard_Cam"), height=32)
                 with ui.HStack(spacing=6):
-                    ui.Button("工位24(电池包合装)", clicked_fn=lambda: self.switch_camera("/World/Cameras/Cam_Station_24"), height=32)
-                    ui.Button("AGV北主干道跟车", clicked_fn=lambda: self.switch_camera("/World/Cameras/Cam_AGV_Chase"), height=32)
+                    ui.Button("工位24(电池包合装)", clicked_fn=lambda: self.switch_camera("/World/Cameras/Station_24_Battery_Cell_Cam"), height=32)
+                    ui.Button("AGV北主干道跟车", clicked_fn=lambda: self.switch_camera("/World/Cameras/AGV_Tugger_Train_Follow"), height=32)
 
     def _build_spatial_audit_ui(self):
         """Spatial clearance & interference detection panel."""

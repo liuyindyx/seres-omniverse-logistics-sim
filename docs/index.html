@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>赛力斯超级工厂总装线边物流 3D 数字孪生 | NVIDIA Omniverse × AnyLogic × AI Agent</title>
+  <style>
+    :root {
+      --bg-dark: #090d14;
+      --bg-panel: rgba(16, 22, 34, 0.90);
+      --bg-card: rgba(24, 33, 50, 0.85);
+      --border: rgba(148, 163, 184, 0.18);
+      --nv-green: #76b900;
+      --omni-cyan: #00d4ff;
+      --danger: #f43f5e;
+      --warn: #f59e0b;
+      --ok: #10b981;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    /* Top Omniverse Header Bar */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 54px;
+      background: linear-gradient(90deg, rgba(11,15,25,0.96) 0%, rgba(18,26,41,0.95) 100%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+    }
+    .brand-group { display: flex; align-items: center; gap: 12px; }
+    .nv-badge {
+      background: linear-gradient(135deg, #76b900 0%, #4d8000 100%);
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.6px;
+      box-shadow: 0 0 12px rgba(118, 185, 0, 0.45);
+    }
+    .aito-badge {
+      background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .brand-title { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
+    .brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    /* Mode Switcher & Action Buttons */
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .mode-pill-group {
+      display: flex;
+      background: rgba(9, 13, 20, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 4px;
+    }
+    .btn {
+      border: 1px solid transparent;
+      background: rgba(30, 41, 59, 0.75);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: rgba(51, 65, 85, 0.9); border-color: rgba(255,255,255,0.2); }
+    .btn.active-baseline {
+      background: rgba(244, 63, 94, 0.22);
+      color: #fda4af;
+      border-color: rgba(244, 63, 94, 0.55);
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.25);
+    }
+    .btn.active-optimized {
+      background: rgba(16, 185, 129, 0.22);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.55);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+    }
+    .btn.active-anylogic2d {
+      background: rgba(245, 158, 11, 0.22);
+      color: #fcd34d;
+      border-color: rgba(245, 158, 11, 0.55);
+    }
+    .btn-agent {
+      background: linear-gradient(135deg, #76b900 0%, #059669 100%);
+      color: #fff;
+      font-weight: 700;
+      border: 1px solid rgba(167, 243, 208, 0.4);
+      box-shadow: 0 0 18px rgba(118, 185, 0, 0.4);
+    }
+    .btn-agent:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+    .btn-compare {
+      background: rgba(0, 212, 255, 0.14);
+      color: #67e8f9;
+      border: 1px solid rgba(0, 212, 255, 0.4);
+    }
+
+    /* 3D Canvas Container */
+    #viewport-container {
+      position: fixed;
+      top: 54px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      background: radial-gradient(circle at 50% 35%, #162032 0%, #090d14 100%);
+    }
+
+    /* Camera Bookmarks Toolbar (Top Center-Left over 3D Viewport) */
+    .camera-bar {
+      position: fixed;
+      top: 66px;
+      left: 332px;
+      right: 362px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .cam-group {
+      pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+    .cam-btn {
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 5px;
+      padding: 4px 9px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cam-btn:hover, .cam-btn.active {
+      background: rgba(0, 212, 255, 0.2);
+      color: #fff;
+      border-color: var(--omni-cyan);
+    }
+
+    /* Left Panel: KPIs + Space-Throughput Paradox Sandbox + Core Advantages */
+    .left-panel {
+      position: fixed;
+      top: 66px;
+      left: 12px;
+      bottom: 12px;
+      width: 310px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 20;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .panel-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tag-omni {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(118, 185, 0, 0.18);
+      color: #a3e635;
+      border: 1px solid rgba(118, 185, 0, 0.4);
+    }
+    .tag-des {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0, 212, 255, 0.16);
+      color: #67e8f9;
+      border: 1px solid rgba(0, 212, 255, 0.35);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .kpi-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .kpi-label { font-size: 10px; color: var(--text-muted); }
+    .kpi-val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+    .kpi-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
+
+    /* Sliders & Paradox Controls */
+    .control-row { margin-bottom: 9px; }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--omni-cyan);
+      cursor: pointer;
+      height: 5px;
+    }
+    .paradox-alert {
+      font-size: 11px;
+      line-height: 1.45;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(244, 63, 94, 0.14);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fecdd3;
+      margin-top: 6px;
+    }
+    .paradox-alert.resolved {
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #a7f3d0;
+    }
+
+    /* Right Panel: OpenUSD Scenegraph + Prim Inspector + AI Agent Terminal */
+    .right-panel {
+      position: fixed;
+      top: 66px;
+      right: 12px;
+      bottom: 12px;
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 20;
+      overflow-y: auto;
+    }
+    .usd-tree {
+      font-size: 11px;
+      max-height: 170px;
+      overflow-y: auto;
+      line-height: 1.65;
+      color: #cbd5e1;
+      background: rgba(9, 13, 20, 0.65);
+      border-radius: 6px;
+      padding: 6px 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .usd-node {
+      cursor: pointer;
+      padding: 1px 4px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .usd-node:hover { background: rgba(0, 212, 255, 0.15); color: #fff; }
+    .usd-node.selected { background: rgba(118, 185, 0, 0.25); color: #d9f99d; font-weight: 700; }
+
+    .inspector-box {
+      font-size: 11px;
+      line-height: 1.5;
+      background: rgba(9, 13, 20, 0.72);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #e2e8f0;
+    }
+    .code-snippet {
+      margin-top: 6px;
+      padding: 6px 8px;
+      background: #05080f;
+      border-radius: 5px;
+      border: 1px solid rgba(148,163,184,0.2);
+      font-size: 10px;
+      color: #7dd3fc;
+      white-space: pre-wrap;
+      max-height: 105px;
+      overflow-y: auto;
+    }
+
+    .terminal-box {
+      flex: 1;
+      min-height: 140px;
+      max-height: 220px;
+      background: #05080f;
+      border: 1px solid rgba(118, 185, 0, 0.35);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+      line-height: 1.55;
+      overflow-y: auto;
+      color: #cbd5e1;
+    }
+
+    /* Bottom Center HUD Bar: Legend & Omniverse Status */
+    .bottom-hud {
+      position: fixed;
+      bottom: 12px;
+      left: 332px;
+      right: 362px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      font-size: 11px;
+    }
+    .legend-items { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: #cbd5e1; }
+    .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+    /* AnyLogic 2D Blindspot Banner Overlay */
+    #blindspot-banner {
+      position: fixed;
+      top: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(245, 158, 11, 0.94);
+      color: #090d14;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      z-index: 25;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      display: none;
+      max-width: 680px;
+      text-align: center;
+    }
+
+    /* Modal: Omniverse vs AnyLogic Comparison Matrix */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 15, 0.82);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid rgba(0, 212, 255, 0.4);
+      border-radius: 14px;
+      max-width: 960px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 22px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+    table.comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    table.comp-table th, table.comp-table td {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    table.comp-table th { background: rgba(30, 41, 59, 0.9); color: #fff; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+
+    /* Presentation Director Overlay (Talking Points + Subtitles + Panel Focus Ring) */
+    #director-card {
+      position: fixed;
+      top: 112px;
+      left: 336px;
+      width: 560px;
+      background: linear-gradient(135deg, rgba(11, 18, 31, 0.92) 0%, rgba(19, 30, 49, 0.90) 100%);
+      border: 1.5px solid rgba(0, 212, 255, 0.55);
+      border-left: 5px solid var(--nv-green);
+      border-radius: 12px;
+      padding: 12px 16px;
+      z-index: 35;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.72), 0 0 20px rgba(0, 212, 255, 0.18);
+      backdrop-filter: blur(12px);
+      display: none;
+      pointer-events: none;
+    }
+    .dir-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    .dir-badge {
+      background: rgba(118, 185, 0, 0.22);
+      color: #bef264;
+      border: 1px solid rgba(118, 185, 0, 0.5);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .dir-step-tag {
+      font-size: 11px;
+      color: #67e8f9;
+      font-weight: 700;
+    }
+    .dir-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 7px;
+      letter-spacing: 0.2px;
+    }
+    .dir-bullets {
+      list-style: none;
+      font-size: 12px;
+      color: #e2e8f0;
+      line-height: 1.55;
+    }
+    .dir-bullets li {
+      position: relative;
+      padding-left: 16px;
+      margin-bottom: 3px;
+    }
+    .dir-bullets li::before {
+      content: "▸";
+      position: absolute;
+      left: 2px;
+      color: var(--omni-cyan);
+      font-weight: bold;
+    }
+
+    #director-subtitle-bar {
+      position: fixed;
+      bottom: 58px;
+      left: 336px;
+      right: 366px;
+      background: rgba(7, 11, 19, 0.92);
+      border: 1.5px solid rgba(118, 185, 0, 0.55);
+      border-radius: 10px;
+      padding: 10px 18px;
+      z-index: 55;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      display: none;
+      pointer-events: none;
+    }
+    .sub-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fef08a;
+      text-align: center;
+      line-height: 1.45;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+    }
+    .sub-progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 7px;
+    }
+    .sub-progress-bg {
+      flex: 1;
+      height: 5px;
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .sub-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #76b900 0%, #00d4ff 100%);
+    }
+    .sub-time {
+      font-size: 11px;
+      color: #94a3b8;
+      min-width: 85px;
+      text-align: right;
+    }
+
+    #director-focus-ring {
+      position: fixed;
+      border: 2.5px solid #facc15;
+      border-radius: 10px;
+      box-shadow: 0 0 22px rgba(250, 204, 21, 0.65), inset 0 0 12px rgba(250, 204, 21, 0.25);
+      z-index: 45;
+      pointer-events: none;
+      display: none;
+      transition: all 0.25s ease;
+    }
+    .focus-tag {
+      position: absolute;
+      top: -24px;
+      right: 6px;
+      background: #facc15;
+      color: #090d14;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+  </style>
+
+  <!-- Three.js Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 1. Top Omniverse Studio Header -->
+  <header class="top-bar">
+    <div class="brand-group">
+      <span class="nv-badge">NVIDIA OMNIVERSE</span>
+      <span class="aito-badge">SERES 赛力斯超级工厂</span>
+      <div>
+        <div class="brand-title">总装车间 40 工位线边物流 3D 物理与离散事件协同数字孪生</div>
+        <div class="brand-sub">
+          OpenUSD 3D 空间严控（<span style="color:#fda4af;font-weight:600;">放得下？</span>） ⟷ AnyLogic 离散事件排产（<span style="color:#67e8f9;font-weight:600;">来得及？</span>） ⟷ AI Agent 代码化建模与自愈闭环
+        </div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="mode-pill-group">
+        <button id="btn-mode-baseline" class="btn active-baseline" onclick="window.setSimMode('baseline')">
+          🚨 基准冲突态 (Baseline 3D)
+        </button>
+        <button id="btn-mode-anylogic2d" class="btn" onclick="window.setSimMode('anylogic2d')" title="展示传统 AnyLogic 2D 抽象仿真为何发现不了立柱碰撞与料架侵占">
+          👁️ 传统 AnyLogic 2D 盲区视角
+        </button>
+        <button id="btn-mode-optimized" class="btn" onclick="window.setSimMode('optimized')">
+          ✅ Agent 3D 闭环优化态 (Optimized)
+        </button>
+      </div>
+
+      <button class="btn btn-agent" onclick="window.runAgentClosedLoop()">
+        ⚡ 启动 AI Agent 3D 自动调优
+      </button>
+
+      <button class="btn btn-compare" onclick="window.toggleCompareModal(true)">
+        📊 Omniverse vs 传统仿真对比
+      </button>
+
+      <button id="btn-tour" class="btn" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#fff;font-weight:700;" onclick="window.togglePresentationTour()">
+        🎬 3分钟讲解演示
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Director Overlays (Talking Point Card + Subtitle Bar + Focus Ring) -->
+  <div id="director-card">
+    <div class="dir-badge-row">
+      <span class="dir-badge" id="dir-badge">第一部分 · 项目核心亮点与架构 (1/5)</span>
+      <span class="dir-step-tag mono" id="dir-step-tag">🎙️ 实时面板操作讲解中</span>
+    </div>
+    <div class="dir-title" id="dir-title">赛力斯超级工厂总装线边物流：60秒极速节拍下的“双向拷问”</div>
+    <ul class="dir-bullets" id="dir-bullets"></ul>
+  </div>
+
+  <div id="director-subtitle-bar">
+    <div class="sub-text" id="dir-sub-text">正在初始化三维讲解演示...</div>
+    <div class="sub-progress-wrap">
+      <div class="sub-progress-bg"><div class="sub-progress-fill" id="dir-prog-fill"></div></div>
+      <div class="sub-time mono" id="dir-sub-time">00:00 / 03:39</div>
+    </div>
+  </div>
+
+  <div id="director-focus-ring">
+    <span class="focus-tag" id="dir-focus-label">👆 正在操作此面板</span>
+  </div>
+
+  <!-- 2. AnyLogic 2D Blindspot Explanation Banner -->
+  <div id="blindspot-banner">
+    ⚠️ 当前为【传统 AnyLogic 2D 抽象逻辑视角】：工位仅被简化为 2D 逻辑方块，料架无真实三维体积与立柱网格。<br/>
+    <span style="font-weight:500;">传统仿真在此视角下无法感知“工位16/21/34 撞击 18m 承重钢柱”及“工位24 巨鲸电池架侵占 AGV 安全走廊”！请切回 3D 视角查看真实空间冲突。</span>
+  </div>
+
+  <!-- 3. Top Camera Presets & Layer Toggles -->
+  <div class="camera-bar">
+    <div class="cam-group">
+      <span style="font-size:11px;color:#94a3b8;font-weight:600;margin-right:2px;">🎥 RTX 3D 机位:</span>
+      <button class="cam-btn active" id="cam-overview" onclick="window.flyToCamera('overview')">全景等轴测 (280m)</button>
+      <button class="cam-btn" id="cam-st16" onclick="window.flyToCamera('st16')">💥 工位16 座椅撞柱特写</button>
+      <button class="cam-btn" id="cam-st21" onclick="window.flyToCamera('st21')">💥 工位21 副车架撞柱</button>
+      <button class="cam-btn" id="cam-st24" onclick="window.flyToCamera('st24')">🔋 工位24 电池侵占AGV道</button>
+      <button class="cam-btn" id="cam-st32" onclick="window.flyToCamera('st32')">🦾 工位32 轮胎机械臂</button>
+      <button class="cam-btn" id="cam-agv" onclick="window.flyToCamera('agv')">🚜 AGV 水蜘蛛跟拍</button>
+      <button class="cam-btn" id="cam-drone" onclick="window.flyToCamera('drone')">🚁 无人机环绕漫游</button>
+    </div>
+
+    <div class="cam-group">
+      <label style="font-size:11px;color:#cbd5e1;cursor:pointer;display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" id="chk-roof" onchange="window.toggleRoofTrusses(this.checked)" /> 显示厂房顶棚钢桁架
+      </label>
+      <label style="font-size:11px;color:#cbd5e1;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:6px;">
+        <input type="checkbox" id="chk-labels" checked onchange="window.toggle3DLabels(this.checked)" /> 3D 工位/库存悬浮标牌
+      </label>
+    </div>
+  </div>
+
+  <!-- 4. Left Panel: Dual KPIs & Line-Side Space-Throughput Conflict Sandbox -->
+  <aside class="left-panel">
+    <!-- Dual Verification KPIs -->
+    <div class="panel-card">
+      <div class="card-header">
+        <span>🎯 “放得下 × 来得及”双向闭环指标</span>
+        <span class="tag-omni">PhysX 5 + DES</span>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-box">
+          <div class="kpi-label">3D 物理空间 (放得下？)</div>
+          <div class="kpi-val" id="kpi-fit" style="color:var(--danger);">放不下 (91.2%)</div>
+          <div class="kpi-sub" id="kpi-fit-sub">立柱碰撞: 5处 | 侵占通道: 2处</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">时序供料节拍 (来得及？)</div>
+          <div class="kpi-val" id="kpi-time" style="color:var(--danger);">8,174 次停线</div>
+          <div class="kpi-sub" id="kpi-time-sub">6台单车AGV，运力缺口 85%</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">总装产线节拍 (Takt)</div>
+          <div class="kpi-val" id="kpi-takt" style="color:var(--omni-cyan);">60s / 台</div>
+          <div class="kpi-sub" id="kpi-takt-sub">产能: 60 JPH | 40工位×7m</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">AGV 车队与立体超市</div>
+          <div class="kpi-val" id="kpi-fleet" style="color:var(--warn);">6 台 (单主库)</div>
+          <div class="kpi-sub" id="kpi-fleet-sub">平均往返 170s | 负荷 88.2%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Sandbox: The Line-Side Space vs. Throughput Paradox -->
+    <div class="panel-card">
+      <div class="card-header">
+        <span>⚖️ 线边仓位“空间 vs 产能”矛盾沙盒</span>
+        <span class="tag-des">实时 3D 联动</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;line-height:1.4;">
+        拖动下方滑块，在 3D 场景中直观验证为什么传统单层扩建无法兼顾<strong>“放得下”</strong>与<strong>“来得及”</strong>：
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>线边料架平面扩容系数 (XY 尺寸):</span>
+          <span class="mono" id="lbl-rack-scale" style="color:var(--omni-cyan);font-weight:700;">1.00x (基准)</span>
+        </div>
+        <input type="range" id="slider-rack-scale" min="0.65" max="1.55" step="0.05" value="1.00" oninput="window.onParadoxSliderChange()" />
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>生产节拍时间 (Takt Time):</span>
+          <span class="mono" id="lbl-takt" style="color:#6ee7b7;font-weight:700;">60s (60 JPH)</span>
+        </div>
+        <input type="range" id="slider-takt" min="45" max="90" step="5" value="60" oninput="window.onParadoxSliderChange()" />
+      </div>
+
+      <div class="control-row">
+        <div class="control-label">
+          <span>AGV 水蜘蛛车队规模:</span>
+          <span class="mono" id="lbl-agv-count" style="color:#fcd34d;font-weight:700;">6 台</span>
+        </div>
+        <input type="range" id="slider-agv-count" min="6" max="40" step="2" value="6" oninput="window.onParadoxSliderChange()" />
+      </div>
+
+      <div id="paradox-diagnosis" class="paradox-alert">
+        <strong>💥 跨域结构性死锁：</strong><br/>
+        当前单层料架下，工位 16/21/34 撞击 18m 厂房承重钢柱，工位 24/32 侵占 AGV 走廊（净距仅 0.30m &lt; ISO 0.50m）；若缩小料架则瞬间断料停线！
+      </div>
+    </div>
+
+    <!-- Core Advantages of Omniverse + Agent over AnyLogic -->
+    <div class="panel-card" style="flex:1;">
+      <div class="card-header">
+        <span>🚀 为什么 Omniverse + Agent 远超传统仿真？</span>
+      </div>
+      <div style="font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:8px;line-height:1.45;">
+        <div style="padding:7px;background:rgba(118,185,0,0.1);border-left:3px solid var(--nv-green);border-radius:4px;">
+          <strong style="color:#a3e635;">1. 真 3D 物理空间严控 vs 2D 纸上谈兵</strong><br/>
+          AnyLogic 仅做 2D 逻辑排队，看不见 18m 承重柱干涉与 Z 轴立式货架层高；Omniverse 依托 OpenUSD 毫米级包围盒与 PhysX 5 实时捕获 3D 碰撞与 ISO 安全净距。
+        </div>
+        <div style="padding:7px;background:rgba(0,212,255,0.1);border-left:3px solid var(--omni-cyan);border-radius:4px;">
+          <strong style="color:#67e8f9;">2. Agent 代码化生成 USD vs 手工拖拽建模</strong><br/>
+          传统仿真手工摆放 40 工位、80 料架需 2 周；本项目通过 AI Agent 调用 <code class="mono">pxr.Usd</code> API，3 秒自动生成全套带材质与物理属性的 3D 场景，建模效率提升 <strong>10 倍+</strong>。
+        </div>
+        <div style="padding:7px;background:rgba(16,185,129,0.1);border-left:3px solid var(--ok);border-radius:4px;">
+          <strong style="color:#6ee7b7;">3. Z 轴立体化 + 双向闭环自愈</strong><br/>
+          Agent 自动将超宽平铺料架重构为 <strong>Z 轴双层立式流利架（深度 2.0m→1.35m，容量翻倍）</strong> + 沿 X 轴避柱平移 +2.2m + 3 处 SPS 超市与 36 台 1拖4 水蜘蛛列车，一键达成零干涉、零停线！
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 5. Right Panel: OpenUSD Stage Tree, 3D Prim Inspector & Live USD Mutator, Agent Logs -->
+  <aside class="right-panel">
+    <!-- OpenUSD Scenegraph -->
+    <div class="panel-card">
+      <div class="card-header">
+        <span>🌲 OpenUSD 实时场景树 (Stage Hierarchy)</span>
+        <span class="mono" style="font-size:10px;color:#94a3b8;">seres_ga.usda</span>
+      </div>
+      <div class="usd-tree mono" id="usd-tree-container">
+        <div class="usd-node" onclick="window.selectStationIn3D(0)">▼ /World [Xform] (upAxis=Z, mpu=1.0)</div>
+        <div class="usd-node" style="padding-left:14px;" onclick="window.flyToCamera('overview')">├── /World/PhysicsScene [PhysX 5 GPU]</div>
+        <div class="usd-node" style="padding-left:14px;" onclick="window.flyToCamera('overview')">├── /World/Environment/BuildingColumns (18m×12m)</div>
+        <div class="usd-node selected" id="tree-st16" style="padding-left:14px;color:#fda4af;" onclick="window.selectStationIn3D(16)">├── /World/AssemblyLine/Station_16 [💥撞柱]</div>
+        <div class="usd-node" id="tree-st21" style="padding-left:14px;color:#fda4af;" onclick="window.selectStationIn3D(21)">├── /World/AssemblyLine/Station_21 [💥撞柱]</div>
+        <div class="usd-node" id="tree-st24" style="padding-left:14px;color:#fcd34d;" onclick="window.selectStationIn3D(24)">├── /World/AssemblyLine/Station_24 [⚠️侵占通道]</div>
+        <div class="usd-node" id="tree-st32" style="padding-left:14px;color:#fcd34d;" onclick="window.selectStationIn3D(32)">├── /World/AssemblyLine/Station_32 [⚠️侵占通道]</div>
+        <div class="usd-node" id="tree-st34" style="padding-left:14px;color:#fda4af;" onclick="window.selectStationIn3D(34)">├── /World/AssemblyLine/Station_34 [💥撞柱]</div>
+        <div class="usd-node" style="padding-left:14px;" onclick="window.selectStationIn3D(8)">├── /World/AssemblyLine/Station_08 [🦾涂胶机器人]</div>
+        <div class="usd-node" style="padding-left:14px;" onclick="window.flyToCamera('agv')">└── /World/AGV_Fleet/TuggerTrain_01..36</div>
+      </div>
+    </div>
+
+    <!-- 3D Prim Property Inspector & Live Parametric Editor -->
+    <div class="panel-card">
+      <div class="card-header">
+        <span>🔍 OpenUSD Prim 属性与参数化重构器</span>
+        <span class="tag-omni">点击 3D 物体拾取</span>
+      </div>
+      <div class="inspector-box" id="prim-inspector">
+        <div style="font-weight:700;color:var(--omni-cyan);margin-bottom:4px;" id="insp-title">
+          /World/AssemblyLine/Station_16 (二排独立行政座椅工位)
+        </div>
+        <div id="insp-details">
+          • <strong>所属区域:</strong> Trim-2 (内饰二线) | <strong>X坐标:</strong> 108.5m<br/>
+          • <strong>左/右BOM:</strong> 二排老板零重力座椅 (2.2×1.8×1.8m, 70kg)<br/>
+          • <strong>3D 空间审计:</strong> <span style="color:#f43f5e;font-weight:700;">与钢柱 Col_108_p4 发生硬碰撞！</span><br/>
+          • <strong>AGV 通道净距:</strong> 0.50m | <strong>实时库存:</strong> 1 套 (濒临断料)
+        </div>
+
+        <!-- Live Parametric USD Mutator -->
+        <div style="margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.1);">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#a3e635;margin-bottom:3px;">
+            <span>🔧 实时修改当前工位 USD 避柱偏移 (xformOp:translate.x):</span>
+            <span class="mono" id="lbl-st-offset">+0.0m</span>
+          </div>
+          <input type="range" id="slider-st-offset" min="0" max="2.5" step="0.1" value="0" oninput="window.onStationOffsetEdit(this.value)" />
+        </div>
+
+        <div class="code-snippet mono" id="insp-usd-code">def Xform "Rack_Left_P_16_L" (
+    prepend apiSchemas = ["PhysicsCollisionAPI"]
+) {
+    double3 xformOp:translate = (108.5, 3.4, 0.8)
+    float3 xformOp:scale = (1.1, 0.9, 0.75)
+    rel material:binding = &lt;/World/Materials/RackFrameBlue&gt;
+    custom string hazard = "BuildingColumnCollision"
+}</div>
+      </div>
+    </div>
+
+    <!-- AI Agent Autonomous Reasoning Terminal -->
+    <div class="panel-card" style="flex:1;display:flex;flex-direction:column;">
+      <div class="card-header">
+        <span>🤖 Seres-Agent 跨域协同推理终端</span>
+        <span class="mono" style="font-size:10px;color:#a3e635;">MCP + OpenUSD</span>
+      </div>
+      <div class="terminal-box mono" id="agent-terminal">
+        <div style="color:#94a3b8;">&gt; [System] OpenUSD 3D Stage 已载入 (40 工位 / 80 料架 / 68 承重柱)。</div>
+        <div style="color:#f43f5e;font-weight:700;">&gt; [Omniverse 3D 审计] 发现 5 处料架与 18m 承重钢柱发生 3D 包围盒穿透 (St.16, 21, 34)！</div>
+        <div style="color:#f59e0b;font-weight:700;">&gt; [ISO 3691-4 审计] 工位 24(电池包)/32(轮胎) 深度 2.0m，侵占 AGV 走廊，净距仅 0.30m！</div>
+        <div style="color:#38bdf8;">&gt; [AnyLogic DES 审计] 6 台单车 AGV 从集中主库配送，2h 发生 8,174 次缺料停线！</div>
+        <div style="color:#a3e635;">&gt; [提示] 点击顶部【⚡ 启动 AI Agent 3D 自动调优】观看 3D 空间重构全过程。</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 6. Bottom HUD Legend & Controls Hint -->
+  <div class="bottom-hud">
+    <div class="legend-items">
+      <span><i class="dot" style="background:#38bdf8;"></i>18m 厂房承重钢柱</span>
+      <span><i class="dot" style="background:#10b981;"></i>合规双层流利架 (库存充足)</span>
+      <span><i class="dot" style="background:#f59e0b;"></i>Kanban 补料触发 / 通道预警</span>
+      <span><i class="dot" style="background:#f43f5e;"></i>3D 柱体碰撞笼 / 缺料停线</span>
+      <span><i class="dot" style="background:#f97316;"></i>6轴装配机器人</span>
+      <span><i class="dot" style="background:#06b6d4;"></i>AGV 水蜘蛛牵引列车 (1拖4)</span>
+    </div>
+    <div class="mono" style="color:#94a3b8;font-size:10px;">
+      🖱️ 左键旋转 3D 视角 | 右键平移 | 滚轮缩放 | 左键点击任意 3D 工位/料架检视 OpenUSD 代码
+    </div>
+  </div>
+
+  <!-- 7. Comparison Matrix Modal -->
+  <div class="modal-backdrop" id="compare-modal" onclick="if(event.target===this) window.toggleCompareModal(false)">
+    <div class="modal-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;">
+        <div>
+          <h2 style="font-size:18px;color:#fff;">📊 为什么选择 NVIDIA Omniverse + AI Agent？（对比传统 AnyLogic 离散仿真）</h2>
+          <p style="font-size:12px;color:#94a3b8;margin-top:4px;">赛力斯超级工厂总装车间 40 工位线边物流规划核心技术代差</p>
+        </div>
+        <button class="btn" onclick="window.toggleCompareModal(false)">✕ 关闭</button>
+      </div>
+
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th style="width:18%;">对比维度</th>
+            <th style="width:27%;color:#fda4af;">传统 AnyLogic / 2D 离散事件仿真</th>
+            <th style="width:27%;color:#fcd34d;">传统纯 3D CAD / 静态漫游软件</th>
+            <th style="width:28%;color:#a3e635;">本项目：NVIDIA Omniverse + AnyLogic DES + AI Agent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. 线边仓位空间冲突检测<br/>（能不能放得下？）</strong></td>
+            <td><strong>❌ 存在严重三维盲区：</strong><br/>将工位简化为 2D 逻辑节点，无法检测 18m 厂房钢柱干涉、料架 Z 轴层高、机械臂运动包络及 ISO 3691-4 通道净距。</td>
+            <td><strong>⚠️ 仅静态手工测量：</strong><br/>虽然能看 3D，但缺乏动态产线库存耦合，不知道料架缩减后会不会导致断料停线。</td>
+            <td><strong>✅ 毫米级 3D 物理严控：</strong><br/>基于 OpenUSD 真实三维包围盒与 PhysX 5，自动定位 5 处立柱穿透与 2 处 AGV 走廊侵占，并利用 Z 轴双层立体化彻底消解矛盾。</td>
+          </tr>
+          <tr>
+            <td><strong>2. 建模与迭代效率<br/>（代码化 vs 手工拖拽）</strong></td>
+            <td><strong>❌ 极低（数周人肉拖拽）：</strong><br/>40 个工位、80 个料架、BOM 参数需手工逐个连线配置；一旦工艺变更，需推倒重画。</td>
+            <td><strong>❌ 极慢（静态资产笨重）：</strong><br/>修改 40 个工位的料架尺寸需要 3D 美术在建模软件中手动改模型再导出。</td>
+            <td><strong>✅ 提升 10 倍以上（Agent 驱动 OpenUSD）：</strong><br/>通过 Python <code class="mono">pxr.Usd</code> 脚本读取工程 BOM 表，3 秒钟全自动生成 40 工位完整 3D 场景、PBR 材质与相机书签。</td>
+          </tr>
+          <tr>
+            <td><strong>3. “空间 × 产能”结构性矛盾求解</strong></td>
+            <td><strong>❌ 顾此失彼：</strong><br/>在仿真里把缓存区容量改成 10 套就能“不断料”，但根本不知道现场根本放不下 10 套的大料架！</td>
+            <td><strong>❌ 无法评估产能停线：</strong><br/>把料架改小能避开柱子，但不知道会导致全天 8,174 次缺料停线。</td>
+            <td><strong>✅ 跨域双向闭环寻优：</strong><br/>Agent 同时联合求解 <code class="mono">SpatialClearanceChecker</code> 与 <code class="mono">DiscreteLogisticsSimulator</code>，输出“避柱平移 +2.2m + 1.35m 双层流利架 + 3SPS 超市 + 36 台水蜘蛛列车”全局最优解。</td>
+          </tr>
+          <tr>
+            <td><strong>4. 工业标准与生态互通</strong></td>
+            <td>私有模型格式，难以直接驱动工业机器人与视觉仿真。</td>
+            <td>专有 CAD 格式，缺少实时时序仿真内核。</td>
+            <td>原生通用 <strong>Pixar OpenUSD (.usda)</strong> 标准，可无缝在浏览器 WebGL、Omniverse USD Composer 及 Isaac Sim 中打开。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 8. Main 3D WebGL Viewport -->
+  <div id="viewport-container"></div>
+
+  <!-- Three.js 3D Digital Twin Engine Script -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // =========================================================================
+    // 1. ENGINEERING DATA: 40 WORKSTATIONS OF SERES SUPER FACTORY (AITO M9)
+    // =========================================================================
+    const STATION_DATA = [
+      { id: 1, zone: 'Trim-1', name: '车身前序线束铺设工位', lName: '低压车身线束总成', lW: 1.8, lD: 1.4, lH: 1.6, lCap: 4, rName: '防火墙隔音棉', rW: 1.6, rD: 1.2, rH: 1.5, rCap: 6 },
+      { id: 2, zone: 'Trim-1', name: '底板阻尼片与地毯工位', lName: '一体化主地毯总成', lW: 2.2, lD: 1.6, lH: 1.8, lCap: 3, rName: '隔音吸音垫块', rW: 1.4, rD: 1.2, rH: 1.4, rCap: 8 },
+      { id: 3, zone: 'Trim-1', name: '踏板机构与制动主缸', lName: '电子油门/制动踏板', lW: 1.4, lD: 1.2, lH: 1.4, lCap: 6, rName: '制动真空管路', rW: 1.4, rD: 1.2, rH: 1.4, rCap: 6 },
+      { id: 4, zone: 'Trim-1', name: '顶棚天幕与线束预装', lName: '全景天幕双层玻璃', lW: 2.4, lD: 1.8, lH: 1.6, lCap: 4, rName: '顶棚一体化内饰', rW: 2.2, rD: 1.6, rH: 1.6, rCap: 3 },
+      { id: 5, zone: 'Trim-1', name: '仪表板骨架及风道工位', lName: '轻量化仪表板骨架', lW: 2.0, lD: 1.5, lH: 1.6, lCap: 4, rName: '空调通风管路箱', rW: 1.6, rD: 1.2, rH: 1.5, rCap: 5 },
+      { id: 6, zone: 'Trim-1', name: '前围模块与雨刮电机', lName: '集成雨刮电机总成', lW: 1.5, lD: 1.2, lH: 1.4, lCap: 6, rName: '洗涤液壶及管线', rW: 1.4, rD: 1.2, rH: 1.4, rCap: 6 },
+      { id: 7, zone: 'Trim-1', name: '后侧围饰板及安全带', lName: 'D柱内饰板总成', lW: 1.6, lD: 1.2, lH: 1.5, lCap: 6, rName: '三点式预紧安全带', rW: 1.4, rD: 1.2, rH: 1.4, rCap: 8 },
+      { id: 8, zone: 'Trim-1', name: '前挡风玻璃机器人打胶', lName: '前风挡夹胶隔热玻璃', lW: 2.2, lD: 1.6, lH: 1.8, lCap: 4, rName: '聚氨酯涂胶胶桶', rW: 1.2, rD: 1.0, rH: 1.2, rCap: 10, hasRobot: true },
+      { id: 9, zone: 'Trim-1', name: '后挡风及三角窗装配', lName: '后尾门隐私夹胶玻璃', lW: 2.0, lD: 1.5, lH: 1.6, lCap: 5, rName: '角窗密封模块', rW: 1.4, rD: 1.2, rH: 1.4, rCap: 8 },
+      { id: 10, zone: 'Trim-1', name: '车身密封条与线束贯通', lName: '主车体EPDM密封条', lW: 1.6, lD: 1.2, lH: 1.5, lCap: 6, rName: '门槛迎宾不锈钢饰条', rW: 1.4, rD: 1.0, rH: 1.2, rCap: 8 },
+
+      { id: 11, zone: 'Trim-2', name: '智能座舱三联屏模块', lName: '华为三联屏IP总成', lW: 2.2, lD: 1.8, lH: 1.6, lCap: 3, rName: 'AR-HUD抬头显示单元', rW: 1.5, rD: 1.2, rH: 1.4, rCap: 5 },
+      { id: 12, zone: 'Trim-2', name: '副仪表板及中央扶手箱', lName: '中央控制台总成', lW: 2.0, lD: 1.6, lH: 1.5, lCap: 4, rName: '双50W车载无线充', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 8 },
+      { id: 13, zone: 'Trim-2', name: '方向盘及转向柱模块', lName: '真皮多功能加热方向盘', lW: 1.5, lD: 1.2, lH: 1.4, lCap: 6, rName: '电动四向调节转向柱', rW: 1.6, rD: 1.3, rH: 1.5, rCap: 5 },
+      { id: 14, zone: 'Trim-2', name: 'HUAWEI SOUND音响群', lName: 'HUAWEI SOUND扬声器', lW: 1.5, lD: 1.2, lH: 1.4, lCap: 8, rName: '独立数字音频功放', rW: 1.4, rD: 1.0, rH: 1.2, rCap: 8 },
+      { id: 15, zone: 'Trim-2', name: '前排主副驾零重力座椅', lName: '前排零重力真皮座椅', lW: 2.2, lD: 1.8, lH: 1.8, lCap: 2, rName: '座椅滑轨与底座线束', rW: 1.5, rD: 1.2, rH: 1.4, rCap: 6, hasRobot: true },
+      { id: 16, zone: 'Trim-2', name: '二排独立行政商务座椅', lName: '二排老板零重力座椅', lW: 2.2, lD: 1.8, lH: 1.8, lCap: 2, rName: '座椅多功能小桌板', rW: 1.5, rD: 1.2, rH: 1.4, rCap: 6, colCrash: true, colName: 'Col_108_p4', hasRobot: true },
+      { id: 17, zone: 'Trim-2', name: '三排电动折叠座椅装配', lName: '三排电动翻折座椅', lW: 2.0, lD: 1.6, lH: 1.7, lCap: 3, rName: '后备箱储物盖板盒', rW: 1.6, rD: 1.3, rH: 1.4, rCap: 6 },
+      { id: 18, zone: 'Trim-2', name: '车门分装线接驳与门板', lName: '左侧前后门精细内饰板', lW: 1.8, lD: 1.4, lH: 1.6, lCap: 4, rName: '右侧前后门精细内饰板', rW: 1.8, rD: 1.4, rH: 1.6, rCap: 4 },
+      { id: 19, zone: 'Trim-2', name: '后备箱侧饰板及尾门护板', lName: '行李厢侧饰吸音板', lW: 1.8, lD: 1.3, lH: 1.5, lCap: 5, rName: '电动尾门双电机锁块', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 6 },
+      { id: 20, zone: 'Trim-2', name: '内饰外观质检与通电工位', lName: '全车电路保护盖板', lW: 1.4, lD: 1.0, lH: 1.2, lCap: 10, rName: '随车应急安全套件', rW: 1.4, rD: 1.0, rH: 1.2, rCap: 10 },
+
+      { id: 21, zone: 'Chassis', name: '前副车架及双叉臂合装', lName: '前全铝合金副车架', lW: 2.4, lD: 1.8, lH: 1.6, lCap: 2, rName: '前双叉臂摆臂悬挂', rW: 1.8, rD: 1.4, rH: 1.5, rCap: 4, colCrash: true, colName: 'Col_144_p4/n4', hasRobot: true },
+      { id: 22, zone: 'Chassis', name: '后副车架及多连杆合装', lName: '后高强钢副车架总成', lW: 2.4, lD: 1.8, lH: 1.6, lCap: 2, rName: '后五连杆独立悬挂', rW: 1.8, rD: 1.4, rH: 1.5, rCap: 4, hasRobot: true },
+      { id: 23, zone: 'Chassis', name: '前后电驱与增程器合装', lName: '前交流异步智能电驱', lW: 2.0, lD: 1.6, lH: 1.6, lCap: 3, rName: '后永磁同步碳化硅电驱', rW: 2.0, rD: 1.6, rH: 1.6, rCap: 3 },
+      { id: 24, zone: 'Chassis', name: '100kWh巨鲸电池自动合装', lName: '100kWh宁德时代巨鲸电池', lW: 2.8, lD: 2.0, lH: 1.4, lCap: 2, rName: '航空级高强紧固螺栓盒', rW: 1.2, rD: 1.0, rH: 1.2, rCap: 12, agvEncroach: true, hasRobot: true },
+      { id: 25, zone: 'Chassis', name: '高压动力电缆及冷却管', lName: '800V碳化硅高压橙色缆', lW: 1.6, lD: 1.3, lH: 1.4, lCap: 5, rName: '电池热管理冷却水管', rW: 1.6, rD: 1.2, rH: 1.4, rCap: 5 },
+      { id: 26, zone: 'Chassis', name: '闭式双腔空气悬架工位', lName: '双腔空气弹簧及CDC减震', lW: 1.8, lD: 1.4, lH: 1.5, lCap: 4, rName: '高压储气罐及集成气泵', rW: 1.5, rD: 1.2, rH: 1.4, rCap: 6 },
+      { id: 27, zone: 'Chassis', name: '前后制动盘及卡钳装配', lName: '大尺寸通风打孔制动盘', lW: 1.6, lD: 1.3, lH: 1.4, lCap: 6, rName: '四活塞固定式红卡钳', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 8 },
+      { id: 28, zone: 'Chassis', name: '转向机总成及拉杆工位', lName: '双小齿轮电动助力转向', lW: 1.8, lD: 1.4, lH: 1.4, lCap: 4, rName: '横拉杆及球头销组件', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 8 },
+      { id: 29, zone: 'Chassis', name: '底盘整流罩与防擦护板', lName: '平整化复合材料底护板', lW: 2.2, lD: 1.5, lH: 1.5, lCap: 4, rName: '后扩散器防气流护板', rW: 2.0, rD: 1.5, rH: 1.5, rCap: 4 },
+      { id: 30, zone: 'Chassis', name: '底盘合装终检及力矩追溯', lName: '底盘高精度力矩追溯件', lW: 1.2, lD: 1.0, lH: 1.2, lCap: 10, rName: '荧光防松标记漆套件', rW: 1.2, rD: 1.0, rH: 1.2, rCap: 10 },
+
+      { id: 31, zone: 'Final', name: '前后保险杠及星环大灯', lName: '前脸穿透式星环像素大灯', lW: 2.4, lD: 1.8, lH: 1.6, lCap: 3, rName: '后星环尾灯及保险杠', rW: 2.4, rD: 1.8, rH: 1.6, rCap: 3, hasRobot: true },
+      { id: 32, zone: 'Final', name: '21寸轮毂轮胎机器人拧紧', lName: '21寸低滚阻轮胎轮毂套件', lW: 2.4, lD: 1.9, lH: 1.6, lCap: 2, rName: '防盗轮毂螺栓螺母盘', rW: 1.2, rD: 1.0, rH: 1.2, rCap: 12, agvEncroach: true, hasRobot: true },
+      { id: 33, zone: 'Final', name: '全车冷却液/制动液加注', lName: '真空抽注加液枪机架', lW: 1.8, lD: 1.4, lH: 1.5, lCap: 6, rName: '环保制冷剂与冷媒接头', rW: 1.5, rD: 1.2, rH: 1.4, rCap: 6 },
+      { id: 34, zone: 'Final', name: '前后四车门铰链整体落位', lName: '左侧双车门整体装配架', lW: 2.2, lD: 1.7, lH: 1.8, lCap: 3, rName: '右侧双车门整体装配架', rW: 2.2, rD: 1.7, rH: 1.8, rCap: 3, colCrash: true, colName: 'Col_234_p4/n4', hasRobot: true },
+      { id: 35, zone: 'Final', name: '前机舱盖与尾门电吸锁', lName: '铝合金前机盖隔音总成', lW: 2.2, lD: 1.6, lH: 1.6, lCap: 4, rName: '电动电吸尾门双撑杆', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 6 },
+      { id: 36, zone: 'Final', name: '华为192线激光雷达标定', lName: '车顶192线激光雷达总成', lW: 1.5, lD: 1.2, lH: 1.4, lCap: 6, rName: '侧视双目感知摄像机', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 8, hasRobot: true },
+      { id: 37, zone: 'Final', name: '整车低压通电与网关刷写', lName: '12V车载AGM蓄电池组', lW: 1.5, lD: 1.2, lH: 1.3, lCap: 6, rName: '车载OTA高速刷写枪', rW: 1.2, rD: 1.0, rH: 1.2, rCap: 10 },
+      { id: 38, zone: 'Final', name: '四轮定位及ADS动态标定', lName: '四轮定位高精激光靶标架', lW: 1.8, lD: 1.4, lH: 1.6, lCap: 4, rName: '动平衡专用配重盒', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 10 },
+      { id: 39, zone: 'Final', name: '下线转毂试验及淋雨前序', lName: '转毂尾气强力抽排管', lW: 1.6, lD: 1.2, lH: 1.4, lCap: 6, rName: '淋雨气密性检测护罩', rW: 1.6, rD: 1.2, rH: 1.4, rCap: 6 },
+      { id: 40, zone: 'Final', name: '终检OK线与整车合格出厂', lName: '随车出厂合格证与钥匙箱', lW: 1.2, lD: 1.0, lH: 1.2, lCap: 12, rName: '整车高透保护贴膜卷', rW: 1.4, rD: 1.1, rH: 1.3, rCap: 8 }
+    ];
+
+    // Coordinate mapping:
+    // In Three.js: X = along the 280m assembly line (0..280m, centered around 140m)
+    // Y = vertical height (up = +Y in Three.js, mapped to Z in OpenUSD)
+    // Z = cross-shop width (-45m to +45m; North = -Z, South = +Z)
+    const container = document.getElementById('viewport-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090d16);
+    scene.fog = new THREE.FogExp2(0x090d16, 0.0022);
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.5, 1200);
+    camera.position.set(86, 26, 42);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight - 54);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(140, 2, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    controls.minDistance = 4;
+    controls.maxDistance = 320;
+
+    // =========================================================================
+    // 2. STUDIO & INDUSTRIAL RTX LIGHTING
+    // =========================================================================
+    const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x1e293b, 1.1);
+    hemiLight.position.set(140, 60, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.8);
+    dirLight.position.set(200, 95, 65);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 10;
+    dirLight.shadow.camera.far = 350;
+    dirLight.shadow.camera.left = -160;
+    dirLight.shadow.camera.right = 160;
+    dirLight.shadow.camera.top = 80;
+    dirLight.shadow.camera.bottom = -80;
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.55);
+    fillLight.position.set(60, 45, -70);
+    scene.add(fillLight);
+
+    // =========================================================================
+    // 3. PBR MATERIALS LIBRARY (Matching OpenUSD factory_materials.usda)
+    // =========================================================================
+    const MATS = {
+      floorEpoxy: new THREE.MeshStandardMaterial({ color: 0x131b29, roughness: 0.35, metalness: 0.2 }),
+      walkwayGreen: new THREE.MeshStandardMaterial({ color: 0x0d5c3a, roughness: 0.5, metalness: 0.1 }),
+      agvLaneBlue: new THREE.MeshStandardMaterial({ color: 0x0c3b5e, roughness: 0.35, metalness: 0.25 }),
+      yellowLine: new THREE.MeshBasicMaterial({ color: 0xfacc15 }),
+      conveyorBed: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.7 }),
+      conveyorBelt: new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85, metalness: 0.1 }),
+      steelColumn: new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.3, metalness: 0.8 }),
+      columnGuard: new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.35, metalness: 0.3 }),
+      roofTruss: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.75 }),
+      rackPostBlue: new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3, metalness: 0.7 }),
+      rackPostOpt: new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.3, metalness: 0.7 }),
+      rackShelfAlum: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.25, metalness: 0.85 }),
+      robotOrange: new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.25, metalness: 0.65 }),
+      robotDark: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 }),
+      agvTeal: new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.22, metalness: 0.75 }),
+      agvPurple: new THREE.MeshStandardMaterial({ color: 0x8b5cf6, roughness: 0.25, metalness: 0.7 }),
+      lidarCone: new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.20, side: THREE.DoubleSide }),
+      collisionRedBox: new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.34 }),
+      collisionWire: new THREE.LineBasicMaterial({ color: 0xff2a55, linewidth: 2 }),
+      encroachAmberBox: new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.32 }),
+      encroachWire: new THREE.LineBasicMaterial({ color: 0xfbbf24, linewidth: 2 }),
+      selectedWire: new THREE.LineBasicMaterial({ color: 0x76b900, linewidth: 2 }),
+      carGlass: new THREE.MeshPhysicalMaterial({ color: 0x0f172a, roughness: 0.08, metalness: 0.1, transmission: 0.55, transparent: true, opacity: 0.72 }),
+      carTire: new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.85, metalness: 0.1 }),
+      carRim: new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2, metalness: 0.9 }),
+      ledFront: new THREE.MeshBasicMaterial({ color: 0xe0f2fe }),
+      ledRear: new THREE.MeshBasicMaterial({ color: 0xf43f5e }),
+    };
+
+    const CAR_PAINTS = [
+      new THREE.MeshPhysicalMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.18, clearcoat: 0.9 }), // Silver
+      new THREE.MeshPhysicalMaterial({ color: 0x1e3a8a, metalness: 0.80, roughness: 0.20, clearcoat: 0.9 }), // Galaxy Blue
+      new THREE.MeshPhysicalMaterial({ color: 0x064e3b, metalness: 0.75, roughness: 0.22, clearcoat: 0.9 }), // Pine Green
+      new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, metalness: 0.65, roughness: 0.16, clearcoat: 0.9 }), // Ceramic White
+    ];
+
+    // Helper: create crisp CanvasTexture for 3D billboards & floor signs
+    function makeTextSprite(title, subtitle, borderColor = '#00d4ff', bgColor = 'rgba(15, 23, 42, 0.90)') {
+      const cvs = document.createElement('canvas');
+      cvs.width = 420;
+      cvs.height = 112;
+      const ctx = cvs.getContext('2d');
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.roundRect(4, 4, 412, 104, 14);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 24px "Segoe UI", "Microsoft YaHei", sans-serif';
+      ctx.fillText(title, 18, 44);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '19px "Segoe UI", "Microsoft YaHei", sans-serif';
+      ctx.fillText(subtitle, 18, 80);
+
+      const tex = new THREE.CanvasTexture(cvs);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.set(5.4, 1.45, 1);
+      sprite.renderOrder = 10;
+      return sprite;
+    }
+
+    // =========================================================================
+    // 4. BUILD FACTORY ARCHITECTURE, COLUMNS, CONVEYOR & ZONES
+    // =========================================================================
+    const worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    // 4.1 Floor & Grid
+    const floorGeo = new THREE.PlaneGeometry(340, 110);
+    const floorMesh = new THREE.Mesh(floorGeo, MATS.floorEpoxy);
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.position.set(140, 0, 0);
+    floorMesh.receiveShadow = true;
+    worldGroup.add(floorMesh);
+
+    const gridHelper = new THREE.GridHelper(340, 170, 0x1e3a5f, 0x17253b);
+    gridHelper.position.set(140, 0.02, 0);
+    gridHelper.scale.z = 110 / 340;
+    worldGroup.add(gridHelper);
+
+    // 4.2 Green Walkways & AGV North/South Highways
+    // Conveyor is Z in [-1.6, +1.6]. Walkways at Z = +-2.15. Racks at Z = +-3.4.
+    // ISO 3691-4 Safety Boundary Line at Z = +-4.8. AGV Highways at Z = +-6.2.
+    for (const sign of [-1, 1]) {
+      const walk = new THREE.Mesh(new THREE.PlaneGeometry(292, 0.9), MATS.walkwayGreen);
+      walk.rotation.x = -Math.PI / 2;
+      walk.position.set(140, 0.03, sign * 2.15);
+      worldGroup.add(walk);
+
+      const agvLane = new THREE.Mesh(new THREE.PlaneGeometry(294, 2.8), MATS.agvLaneBlue);
+      agvLane.rotation.x = -Math.PI / 2;
+      agvLane.position.set(140, 0.03, sign * 6.2);
+      worldGroup.add(agvLane);
+
+      // ISO Safety Boundary Line (Z = +-4.8m)
+      const isoLine = new THREE.Mesh(new THREE.PlaneGeometry(294, 0.14), MATS.yellowLine);
+      isoLine.rotation.x = -Math.PI / 2;
+      isoLine.position.set(140, 0.04, sign * 4.8);
+      worldGroup.add(isoLine);
+    }
+
+    // 4.3 280m Main Assembly Skillet Conveyor Bed
+    const convBed = new THREE.Mesh(new THREE.BoxGeometry(286, 0.50, 3.2), MATS.conveyorBed);
+    convBed.position.set(139, 0.25, 0);
+    convBed.receiveShadow = true;
+    worldGroup.add(convBed);
+
+    const convBelt = new THREE.Mesh(new THREE.BoxGeometry(284, 0.06, 2.95), MATS.conveyorBelt);
+    convBelt.position.set(139, 0.53, 0);
+    worldGroup.add(convBelt);
+
+    for (const sign of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(286, 0.22, 0.10), MATS.columnGuard);
+      rail.position.set(139, 0.62, sign * 1.62);
+      worldGroup.add(rail);
+    }
+
+    // 4.4 Building Steel Columns (18m x 12m Grid: X = 0, 18, 36 ... 288; Z = -16, -4.2, +4.2, +16)
+    const columnsGroup = new THREE.Group();
+    const roofTrussGroup = new THREE.Group();
+    roofTrussGroup.visible = false; // Default hidden for clear 3D overview, toggleable via checkbox
+    worldGroup.add(columnsGroup);
+    worldGroup.add(roofTrussGroup);
+
+    const colZList = [-16.0, -4.2, 4.2, 16.0];
+    for (let cx = 0; cx <= 288; cx += 18) {
+      for (const cz of colZList) {
+        const colGroup = new THREE.Group();
+        colGroup.position.set(cx, 0, cz);
+
+        // H-Beam Column Core (0.6m x 8.0m x 0.6m)
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.6, 8.2, 0.6), MATS.steelColumn);
+        beam.position.y = 4.1;
+        beam.castShadow = true;
+        colGroup.add(beam);
+
+        // Yellow Safety Impact Guard at Base (bottom 1.2m)
+        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.74, 1.2, 0.74), MATS.columnGuard);
+        guard.position.y = 0.6;
+        colGroup.add(guard);
+
+        columnsGroup.add(colGroup);
+      }
+
+      // Roof Truss across span
+      const truss = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.55, 36.0), MATS.roofTruss);
+      truss.position.set(cx, 8.4, 0);
+      roofTrussGroup.add(truss);
+    }
+
+    // =========================================================================
+    // 5. BUILD 40 WORKSTATIONS, 3D AITO M9 VEHICLES, MULTI-TIER RACKS & ROBOTS
+    // =========================================================================
+    const stationObjects = []; // Stores references for dynamic updates & raycasting
+    const pickableMeshes = [];
+    const vehicleGroups = [];
+    const robotJoints = [];
+    const labelSprites = [];
+
+    function createAitoM9Vehicle(stId) {
+      const car = new THREE.Group();
+      const paintMat = CAR_PAINTS[stId % CAR_PAINTS.length];
+
+      // Skillet Carrier Pallet underneath
+      const skillet = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.12, 2.5), MATS.conveyorBed);
+      skillet.position.y = 0.06;
+      car.add(skillet);
+
+      // Lower SUV Body
+      const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(5.1, 0.76, 1.98), paintMat);
+      lowerBody.position.y = 0.65;
+      lowerBody.castShadow = true;
+      car.add(lowerBody);
+
+      // Upper Cabin Greenhouse (Tinted Panoramic Glass)
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.35, 0.52, 1.72), MATS.carGlass);
+      cabin.position.set(-0.25, 1.28, 0);
+      car.add(cabin);
+
+      // Roof Silver Trim & Huawei 192-Line LiDAR
+      const roofTrim = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.06, 1.76), MATS.carRim);
+      roofTrim.position.set(-0.25, 1.55, 0);
+      car.add(roofTrim);
+
+      const lidar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.12, 16), MATS.robotDark);
+      lidar.position.set(0.95, 1.63, 0);
+      car.add(lidar);
+
+      // Star-Ring Front LED Headlight & Rear Matrix Taillight
+      const frontLed = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.16, 1.84), MATS.ledFront);
+      frontLed.position.set(2.56, 0.76, 0);
+      car.add(frontLed);
+
+      const rearLed = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 1.84), MATS.ledRear);
+      rearLed.position.set(-2.56, 0.84, 0);
+      car.add(rearLed);
+
+      // 4 Wheels (Properly oriented along Z axis in Three.js)
+      const wheelGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.26, 20);
+      wheelGeo.rotateX(Math.PI / 2);
+      const rimGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.28, 12);
+      rimGeo.rotateX(Math.PI / 2);
+
+      for (const [wx, wz] of [[1.55, 0.98], [1.55, -0.98], [-1.55, 0.98], [-1.55, -0.98]]) {
+        const w = new THREE.Mesh(wheelGeo, MATS.carTire);
+        w.position.set(wx, 0.38, wz);
+        car.add(w);
+        const r = new THREE.Mesh(rimGeo, MATS.carRim);
+        r.position.set(wx, 0.38, wz);
+        car.add(r);
+      }
+
+      return car;
+    }
+
+    function createMultiTierRack(w, d, h, isNorth, partColorHex, stData) {
+      const rackGroup = new THREE.Group();
+
+      // 4 Upright Steel Corner Posts
+      const postGeo = new THREE.BoxGeometry(0.08, h, 0.08);
+      const posts = [];
+      for (const [px, pz] of [[-w * 0.46, -d * 0.46], [w * 0.46, -d * 0.46], [-w * 0.46, d * 0.46], [w * 0.46, d * 0.46]]) {
+        const post = new THREE.Mesh(postGeo, MATS.rackPostBlue);
+        post.position.set(px, h / 2, pz);
+        post.castShadow = true;
+        rackGroup.add(post);
+        posts.push(post);
+      }
+
+      // 3 Roller Shelves (Lower, Middle, Upper Tier for vertical Z-axis stacking)
+      const shelfGeo = new THREE.BoxGeometry(w * 0.96, 0.06, d * 0.94);
+      const shelves = [];
+      for (const sy of [0.22, h * 0.50, h * 0.88]) {
+        const shelf = new THREE.Mesh(shelfGeo, MATS.rackShelfAlum);
+        shelf.position.set(0, sy, 0);
+        rackGroup.add(shelf);
+        shelves.push(shelf);
+      }
+
+      // 3D BOM Cargo Boxes on Shelves
+      const partMat = new THREE.MeshStandardMaterial({ color: partColorHex, roughness: 0.35, metalness: 0.3 });
+      const cargoBoxes = [];
+      for (const sy of [0.46, h * 0.50 + 0.24]) {
+        const box = new THREE.Mesh(new THREE.BoxGeometry(w * 0.78, 0.36, d * 0.76), partMat);
+        box.position.set(0, sy, 0);
+        box.castShadow = true;
+        rackGroup.add(box);
+        cargoBoxes.push(box);
+      }
+
+      // Invisible/Pickable Bounding Volume for easy Raycast Clicking
+      const hitBox = new THREE.Mesh(
+        new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshBasicMaterial({ visible: false })
+      );
+      hitBox.position.y = h / 2;
+      hitBox.userData = { stationId: stData.id, side: isNorth ? 'Left (北侧)' : 'Right (南侧)' };
+      rackGroup.add(hitBox);
+      pickableMeshes.push(hitBox);
+
+      // Andon Status Beacon on Top Corner
+      const andonMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+      const andon = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.32, 12), andonMat);
+      andon.position.set(w * 0.44, h + 0.16, 0);
+      rackGroup.add(andon);
+
+      return { rackGroup, posts, cargoBoxes, andonMat };
+    }
+
+    function createArticulatedRobot(cx, cz) {
+      const rob = new THREE.Group();
+      rob.position.set(cx - 1.1, 0, cz);
+
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, 0.7, 16), MATS.robotDark);
+      base.position.y = 0.35;
+      rob.add(base);
+
+      const pivot = new THREE.Group();
+      pivot.position.y = 0.7;
+      rob.add(pivot);
+
+      const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.30, 0.35, 16), MATS.robotOrange);
+      pivot.add(turret);
+
+      const arm1 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.15, 0.24), MATS.robotOrange);
+      arm1.position.set(0, 0.65, cz > 0 ? -0.15 : 0.15);
+      arm1.rotation.x = cz > 0 ? -0.25 : 0.25;
+      pivot.add(arm1);
+
+      const arm2 = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.20, 0.95), MATS.robotOrange);
+      arm2.position.set(0, 1.15, cz > 0 ? -0.55 : 0.55);
+      pivot.add(arm2);
+
+      return { rob, pivot };
+    }
+
+    // Build all 40 stations
+    STATION_DATA.forEach((st, idx) => {
+      const cx = (st.id - 1) * 7.0 + 3.5;
+      const stGroup = new THREE.Group();
+      worldGroup.add(stGroup);
+
+      // Vehicle on conveyor
+      const car = createAitoM9Vehicle(st.id);
+      car.position.set(cx, 0.55, 0);
+      worldGroup.add(car);
+      vehicleGroups.push({ mesh: car, baseX: cx });
+
+      // Pickable vehicle collider
+      const carHit = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.7, 2.0), new THREE.MeshBasicMaterial({ visible: false }));
+      carHit.position.y = 0.85;
+      carHit.userData = { stationId: st.id, side: 'Vehicle' };
+      car.add(carHit);
+      pickableMeshes.push(carHit);
+
+      // Left (North, Z < 0) & Right (South, Z > 0) Racks
+      const partColors = [0x0284c7, 0xd97706, 0x4f46e5, 0x059669, 0x7c3aed];
+      const leftRackObj = createMultiTierRack(st.lW, st.lD, st.lH, true, partColors[idx % partColors.length], st);
+      const rightRackObj = createMultiTierRack(st.rW, st.rD, st.rH, false, partColors[(idx + 2) % partColors.length], st);
+
+      const baseLeftZ = -(1.6 + 0.9 + st.lD / 2);
+      const baseRightZ = (1.6 + 0.9 + st.rD / 2);
+      leftRackObj.rackGroup.position.set(cx, 0, baseLeftZ);
+      rightRackObj.rackGroup.position.set(cx, 0, baseRightZ);
+      stGroup.add(leftRackObj.rackGroup);
+      stGroup.add(rightRackObj.rackGroup);
+
+      // 3D Red Collision Cage (for St 16, 21, 34 in Baseline)
+      let collisionCage = null;
+      if (st.colCrash) {
+        collisionCage = new THREE.Group();
+        const boxGeo = new THREE.BoxGeometry(st.lW + 0.5, 2.4, st.lD + 0.5);
+        const redVol = new THREE.Mesh(boxGeo, MATS.collisionRedBox);
+        const redWire = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), MATS.collisionWire);
+        collisionCage.add(redVol, redWire);
+        collisionCage.position.set(cx, 1.2, baseLeftZ);
+        stGroup.add(collisionCage);
+      }
+
+      // 3D Amber AGV Corridor Encroachment Cage (for St 24, 32 in Baseline)
+      let encroachCage = null;
+      if (st.agvEncroach) {
+        encroachCage = new THREE.Group();
+        const eGeo = new THREE.BoxGeometry(st.lW + 0.4, 1.8, 0.95);
+        const ambVol = new THREE.Mesh(eGeo, MATS.encroachAmberBox);
+        const ambWire = new THREE.LineSegments(new THREE.EdgesGeometry(eGeo), MATS.encroachWire);
+        encroachCage.add(ambVol, ambWire);
+        encroachCage.position.set(cx, 0.9, -4.45);
+        stGroup.add(encroachCage);
+      }
+
+      // Articulated Robots at key stations
+      if (st.hasRobot) {
+        const rN = createArticulatedRobot(cx, -2.05);
+        const rS = createArticulatedRobot(cx, 2.05);
+        stGroup.add(rN.rob, rS.rob);
+        robotJoints.push(rN.pivot, rS.pivot);
+      }
+
+      // Floating 3D Billboard Label for Key Stations & Every 4th Station
+      let sprite = null;
+      if (st.colCrash || st.agvEncroach || st.id % 4 === 1) {
+        const tagTitle = `ST-${String(st.id).padStart(2, '0')} ${st.name.slice(0, 7)}`;
+        const tagSub = st.colCrash ? '💥 撞击18m承重柱!' : (st.agvEncroach ? '⚠️ 侵占AGV道(0.3m)' : `${st.zone} | 节拍60s`);
+        const bCol = st.colCrash ? '#f43f5e' : (st.agvEncroach ? '#f59e0b' : '#00d4ff');
+        sprite = makeTextSprite(tagTitle, tagSub, bCol);
+        sprite.position.set(cx, 4.2, baseLeftZ);
+        stGroup.add(sprite);
+        labelSprites.push({ sprite, st });
+      }
+
+      stationObjects.push({
+        st,
+        cx,
+        customOffsetX: 0,
+        leftRackObj,
+        rightRackObj,
+        baseLeftZ,
+        baseRightZ,
+        collisionCage,
+        encroachCage,
+        sprite
+      });
+    });
+
+    // Selection Highlight Box
+    const selGeo = new THREE.BoxGeometry(1, 1, 1);
+    const selectionBox = new THREE.LineSegments(new THREE.EdgesGeometry(selGeo), MATS.selectedWire);
+    selectionBox.visible = false;
+    scene.add(selectionBox);
+
+    // =========================================================================
+    // 6. BUILD 3D WAREHOUSES (CENTRAL AS/RS vs 3 ZONED SPS) & AGV FLEET
+    // =========================================================================
+    const baselineWhGroup = new THREE.Group();
+    const optimizedSpsGroup = new THREE.Group();
+    optimizedSpsGroup.visible = false;
+    worldGroup.add(baselineWhGroup, optimizedSpsGroup);
+
+    // Baseline: Single Central High-Bay Warehouse at (140, Z = +28)
+    function buildWarehouseStructure(group, centerX, centerZ, width, depth, height, colorHex, titleText) {
+      const bayMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.35, metalness: 0.65, transparent: true, opacity: 0.82 });
+      const whMesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), bayMat);
+      whMesh.position.set(centerX, height / 2, centerZ);
+      group.add(whMesh);
+
+      const whWire = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(width, height, depth)),
+        new THREE.LineBasicMaterial({ color: 0x38bdf8 })
+      );
+      whWire.position.copy(whMesh.position);
+      group.add(whWire);
+
+      const lbl = makeTextSprite(titleText, `高架立体库 (${width}m×${depth}m)`, '#38bdf8');
+      lbl.scale.set(11, 4.0, 1);
+      lbl.position.set(centerX, height + 3.2, centerZ);
+      group.add(lbl);
+    }
+
+    buildWarehouseStructure(baselineWhGroup, 140, 26, 95, 12, 7.5, 0x1e293b, '集中式 AS/RS 立体主库 (单点瓶颈)');
+    buildWarehouseStructure(optimizedSpsGroup, 55, 22, 48, 10, 5.5, 0x0f766e, '① Trim 内饰区 SPS 随行超市');
+    buildWarehouseStructure(optimizedSpsGroup, 150, 23, 56, 12, 7.5, 0x1d4ed8, '② Chassis 底盘重件立体库');
+    buildWarehouseStructure(optimizedSpsGroup, 235, 22, 46, 10, 5.5, 0x0f766e, '③ Final 终装区 SPS 随行超市');
+
+    // AGV Fleet Pool (Supports up to 40 AGV units / Tugger Trains)
+    const agvPool = [];
+    const agvGroup = new THREE.Group();
+    worldGroup.add(agvGroup);
+
+    for (let i = 0; i < 40; i++) {
+      const unit = new THREE.Group();
+
+      // Tractor Head
+      const tractor = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.65, 1.15), MATS.agvTeal);
+      tractor.position.y = 0.35;
+      tractor.castShadow = true;
+      unit.add(tractor);
+
+      // Rotating LiDAR Turret + Safety Scan Cone
+      const lidarPuck = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.22, 12), MATS.robotDark);
+      lidarPuck.position.set(0.55, 0.78, 0);
+      unit.add(lidarPuck);
+
+      const scanCone = new THREE.Mesh(new THREE.CircleGeometry(1.2, 24, -Math.PI / 3, (2 * Math.PI) / 3), MATS.lidarCone);
+      scanCone.rotation.x = -Math.PI / 2;
+      scanCone.position.set(0.95, 0.06, 0);
+      unit.add(scanCone);
+
+      // 4 Towed Milk-Run Trailers (Visible in Optimized Milk-Run Mode)
+      const trailersGroup = new THREE.Group();
+      for (let t = 1; t <= 4; t++) {
+        const tx = -t * 2.15;
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.22, 1.05), MATS.conveyorBed);
+        deck.position.set(tx, 0.18, 0);
+        const klt = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.48, 0.88), MATS.rackPostBlue);
+        klt.position.set(tx, 0.52, 0);
+        trailersGroup.add(deck, klt);
+      }
+      unit.add(trailersGroup);
+
+      agvGroup.add(unit);
+      agvPool.push({
+        unit,
+        tractor,
+        trailersGroup,
+        laneNorth: i % 2 === 0,
+        progress: (i * 29.5) % 275
+      });
+    }
+
+    // =========================================================================
+    // 7. STATE MANAGEMENT, PARADOX SANDBOX & LIVE SCENE MUTATION
+    // =========================================================================
+    let currentMode = 'baseline'; // 'baseline' | 'anylogic2d' | 'optimized'
+    let rackScaleXY = 1.0;
+    let taktSec = 60;
+    let activeAgvCount = 6;
+    let selectedStationId = 16;
+    let autoOrbitDrone = false;
+
+    function addTerminalLog(msg, color = '#cbd5e1') {
+      const term = document.getElementById('agent-terminal');
+      const line = document.createElement('div');
+      line.style.color = color;
+      line.innerHTML = `&gt; ${msg}`;
+      term.appendChild(line);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function recomputeAndRenderState() {
+      const isOpt = (currentMode === 'optimized');
+
+      // 1. Update Warehouses visibility
+      baselineWhGroup.visible = !isOpt;
+      optimizedSpsGroup.visible = isOpt;
+
+      // 2. Evaluate 3D Spatial Collisions & ISO AGV Corridor Clearance across all 40 stations
+      let colCollisions = 0;
+      let agvEncroachments = 0;
+
+      stationObjects.forEach((obj) => {
+        const st = obj.st;
+        // Effective X shift: in Optimized mode, colliding stations shift +2.2m (or user custom offset)
+        const autoShiftX = (isOpt && st.colCrash) ? 2.2 : 0.0;
+        const totalShiftX = autoShiftX + obj.customOffsetX;
+        const rackX = obj.cx + totalShiftX;
+
+        // Effective Rack Depth: in Optimized mode, encroaching racks use 1.35m vertical dual-tier rack
+        const effScale = isOpt ? 1.0 : rackScaleXY;
+        const effDepthRatio = (isOpt && st.agvEncroach) ? (1.35 / st.lD) : effScale;
+        const effHeightRatio = (isOpt && st.agvEncroach) ? 1.35 : 1.0;
+
+        obj.leftRackObj.rackGroup.position.x = rackX;
+        obj.rightRackObj.rackGroup.position.x = rackX;
+        obj.leftRackObj.rackGroup.scale.set(effScale, effHeightRatio, effDepthRatio);
+        obj.rightRackObj.rackGroup.scale.set(effScale, effHeightRatio, effDepthRatio);
+
+        // Check Column Collision
+        const hasColHit = (st.colCrash && Math.abs(totalShiftX) < 1.5) || (effScale >= 1.25 && st.id % 5 === 0);
+        if (hasColHit) {
+          colCollisions += (st.id === 21 || st.id === 34) ? 2 : 1;
+        }
+        if (obj.collisionCage) {
+          obj.collisionCage.visible = hasColHit && currentMode !== 'anylogic2d';
+          obj.collisionCage.position.x = rackX;
+        }
+
+        // Check AGV Corridor Encroachment (ISO 3691-4 requires >= 0.50m margin to Z = -4.8m)
+        const actualDepth = st.lD * effDepthRatio;
+        const rackOuterZ = 1.6 + 0.9 + actualDepth; // distance from conveyor center
+        const agvMargin = 4.8 - rackOuterZ;
+        const hasEncroach = agvMargin < 0.50;
+        if (hasEncroach) {
+          agvEncroachments += 1;
+        }
+        if (obj.encroachCage) {
+          obj.encroachCage.visible = hasEncroach && currentMode !== 'anylogic2d';
+        }
+
+        // Rack Color & Andon Status (Starvation vs Healthy)
+        const isStarved = !isOpt && (activeAgvCount < 24 || effScale < 0.85) && (st.id % 3 === 0);
+        const postMat = isOpt ? MATS.rackPostOpt : MATS.rackPostBlue;
+        obj.leftRackObj.posts.forEach(p => { p.material = postMat; });
+        obj.rightRackObj.posts.forEach(p => { p.material = postMat; });
+        obj.leftRackObj.andonMat.color.setHex(isStarved ? 0xf43f5e : (hasColHit ? 0xf59e0b : 0x10b981));
+      });
+
+      // 3. Evaluate AnyLogic DES Starvation & Throughput
+      const jph = Math.round(3600 / taktSec);
+      let starvationCount = 0;
+      if (!isOpt) {
+        const capFactor = Math.max(0.3, 1.50 - rackScaleXY * 0.50);
+        const fleetFactor = Math.max(0.1, (32 - activeAgvCount) / 26);
+        const taktFactor = 60 / taktSec;
+        starvationCount = Math.round(8174 * capFactor * fleetFactor * taktFactor);
+      } else {
+        starvationCount = activeAgvCount >= 30 ? 0 : Math.round((30 - activeAgvCount) * 145);
+      }
+
+      const totalViolations = colCollisions + agvEncroachments;
+      const fitPct = Math.max(50, ((80 - totalViolations) / 80) * 100).toFixed(1);
+
+      // 4. Update Top-Left KPI Cards
+      const elFit = document.getElementById('kpi-fit');
+      const elFitSub = document.getElementById('kpi-fit-sub');
+      if (totalViolations === 0) {
+        elFit.textContent = '100% 放得下';
+        elFit.style.color = 'var(--ok)';
+        elFitSub.textContent = '立柱碰撞: 0处 | AGV净距 ≥0.65m';
+      } else {
+        elFit.textContent = `放不下 (${fitPct}%)`;
+        elFit.style.color = 'var(--danger)';
+        elFitSub.textContent = `立柱碰撞: ${colCollisions}处 | 侵占通道: ${agvEncroachments}处`;
+      }
+
+      const elTime = document.getElementById('kpi-time');
+      const elTimeSub = document.getElementById('kpi-time-sub');
+      if (starvationCount === 0) {
+        elTime.textContent = '100% 来得及 (0停线)';
+        elTime.style.color = 'var(--ok)';
+        elTimeSub.textContent = '3区域SPS超市 + 1拖4水蜘蛛准时保供';
+      } else {
+        elTime.textContent = `${starvationCount.toLocaleString()} 次停线`;
+        elTime.style.color = 'var(--danger)';
+        elTimeSub.textContent = `${activeAgvCount}台AGV运力不足，频繁断料停线`;
+      }
+
+      document.getElementById('kpi-takt').textContent = `${taktSec}s / 台`;
+      document.getElementById('kpi-takt-sub').textContent = `产能: ${jph} JPH | 40工位×7m`;
+      document.getElementById('kpi-fleet').textContent = isOpt ? `${activeAgvCount} 台 (1拖4列车)` : `${activeAgvCount} 台 (单主库)`;
+      document.getElementById('kpi-fleet').style.color = isOpt ? 'var(--ok)' : 'var(--warn)';
+      document.getElementById('kpi-fleet-sub').textContent = isOpt ? '单趟往返 58s | 综合负荷 93.7%' : '单趟往返 170s | 运距 180m';
+
+      // 5. Update Paradox Diagnosis Alert Box
+      const diagBox = document.getElementById('paradox-diagnosis');
+      if (isOpt && totalViolations === 0 && starvationCount === 0) {
+        diagBox.className = 'paradox-alert resolved';
+        diagBox.innerHTML = `<strong>✅ 双向完全闭环 (100% 放得下 & 100% 来得及)：</strong><br/>Z 轴立式双层流利架将深度压缩至 1.35m（容量翻倍），干涉工位沿 X 轴避柱平移 +2.2m，配合 3 处 SPS 超市与 ${activeAgvCount} 台水蜘蛛牵引列车，彻底消除碰撞与停线！`;
+      } else if (rackScaleXY > 1.15) {
+        diagBox.className = 'paradox-alert';
+        diagBox.innerHTML = `<strong>💥 盲目扩大单层料架 (${rackScaleXY.toFixed(2)}x) → 空间彻底放不下！</strong><br/>虽然库存增加使停线降至 ${starvationCount} 次，但引发了 <strong>${colCollisions} 处钢柱穿透</strong> 与 <strong>${agvEncroachments} 处 AGV 通道侵占</strong>！`;
+      } else if (rackScaleXY < 0.85) {
+        diagBox.className = 'paradox-alert';
+        diagBox.innerHTML = `<strong>🚨 盲目缩小单层料架 (${rackScaleXY.toFixed(2)}x) → 产线断料瘫痪！</strong><br/>虽然通道变宽，但单架仅够支撑 1 台车，引发 <strong>${starvationCount.toLocaleString()} 次缺料停线</strong>！`;
+      } else {
+        diagBox.className = 'paradox-alert';
+        diagBox.innerHTML = `<strong>💥 跨域结构性死锁：</strong><br/>当前存在 <strong>${colCollisions} 处立柱碰撞</strong>、<strong>${agvEncroachments} 处通道侵占</strong> 及 <strong>${starvationCount.toLocaleString()} 次停线</strong>。点击顶部【⚡ 启动 AI Agent 3D 自动调优】一键重构！`;
+      }
+
+      // 6. Update Scenegraph Tree status badges
+      const treeIds = [
+        { id: 'tree-st16', label: 'Station_16', ok: isOpt, errText: '💥撞柱', okText: '✓避柱+2.2m' },
+        { id: 'tree-st21', label: 'Station_21', ok: isOpt, errText: '💥撞柱', okText: '✓避柱+2.2m' },
+        { id: 'tree-st24', label: 'Station_24', ok: isOpt, errText: '⚠️侵占通道', okText: '✓双层架1.35m' },
+        { id: 'tree-st32', label: 'Station_32', ok: isOpt, errText: '⚠️侵占通道', okText: '✓双层架1.35m' },
+        { id: 'tree-st34', label: 'Station_34', ok: isOpt, errText: '💥撞柱', okText: '✓避柱+2.2m' },
+      ];
+      treeIds.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) {
+          el.style.color = item.ok ? '#6ee7b7' : '#fda4af';
+          el.textContent = `├── /World/AssemblyLine/${item.label} [${item.ok ? item.okText : item.errText}]`;
+        }
+      });
+
+      // Refresh selected station inspector
+      updateStationInspector(selectedStationId);
+    }
+
+    function updateStationInspector(stId) {
+      selectedStationId = stId;
+      const obj = stationObjects.find(o => o.st.id === stId) || stationObjects[15];
+      const st = obj.st;
+      const isOpt = (currentMode === 'optimized');
+      const autoShift = (isOpt && st.colCrash) ? 2.2 : 0.0;
+      const totalShift = autoShift + obj.customOffsetX;
+      const effX = (obj.cx + totalShift).toFixed(2);
+      const effDepth = (isOpt && st.agvEncroach) ? 1.35 : (st.lD * (isOpt ? 1.0 : rackScaleXY)).toFixed(2);
+      const agvMargin = (4.8 - (1.6 + 0.9 + parseFloat(effDepth))).toFixed(2);
+
+      // Move 3D green selection wireframe around the chosen station
+      selectionBox.visible = true;
+      selectionBox.scale.set(6.8, 3.6, 9.2);
+      selectionBox.position.set(parseFloat(effX), 1.8, 0);
+
+      document.getElementById('insp-title').textContent =
+        `/World/AssemblyLine/Station_${String(st.id).padStart(2, '0')} (${st.name})`;
+
+      const colStatus = (st.colCrash && Math.abs(totalShift) < 1.5)
+        ? `<span style="color:#f43f5e;font-weight:700;">💥 与厂房承重钢柱 ${st.colName} 重叠碰撞！</span>`
+        : `<span style="color:#10b981;font-weight:700;">✓ 0 柱体干涉 (安全净距合规)</span>`;
+
+      const agvStatus = (parseFloat(agvMargin) < 0.50)
+        ? `<span style="color:#f59e0b;font-weight:700;">⚠️ 净距 ${agvMargin}m (&lt; ISO 0.50m 违规侵占)</span>`
+        : `<span style="color:#10b981;font-weight:700;">✓ 净距 ${agvMargin}m (符合 ISO 3691-4)</span>`;
+
+      document.getElementById('insp-details').innerHTML = `
+        • <strong>工位区域:</strong> ${st.zone} | <strong>产线 X 坐标:</strong> ${effX}m (偏移 +${totalShift.toFixed(1)}m)<br/>
+        • <strong>北侧料架:</strong> ${st.lName} (${st.lW}×${effDepth}×${st.lH}m)<br/>
+        • <strong>南侧料架:</strong> ${st.rName} (${st.rW}×${effDepth}×${st.rH}m)<br/>
+        • <strong>柱网干涉检测:</strong> ${colStatus}<br/>
+        • <strong>AGV 通道净距:</strong> ${agvStatus}
+      `;
+
+      document.getElementById('insp-usd-code').textContent =
+`def Xform "Station_${String(st.id).padStart(2, '0')}" {
+    def Cube "Rack_Left_P_${String(st.id).padStart(2, '0')}_L" (
+        prepend apiSchemas = ["PhysicsCollisionAPI"]
+    ) {
+        double3 xformOp:translate = (${effX}, ${-(1.6 + 0.9 + parseFloat(effDepth)/2).toFixed(2)}, 0.80)
+        float3 xformOp:scale = (${(st.lW/2).toFixed(2)}, ${(parseFloat(effDepth)/2).toFixed(2)}, 0.75)
+        rel material:binding = </World/Materials/${isOpt ? 'RackPostOpt' : 'RackFrameBlue'}>
+        custom float isoClearanceMeters = ${agvMargin}
+    }
+}`;
+    }
+
+    // =========================================================================
+    // 8. CAMERA FLY-TO ANIMATION & UI CALLBACKS
+    // =========================================================================
+    let camAnim = null;
+
+    window.flyToCamera = function(preset) {
+      autoOrbitDrone = (preset === 'drone');
+      document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`cam-${preset}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const targets = {
+        overview: { pos: new THREE.Vector3(86, 26, 42), look: new THREE.Vector3(142, 1.5, 0) },
+        st16:     { pos: new THREE.Vector3(101, 6.2, -11.5), look: new THREE.Vector3(108.5, 1.3, -3.0) },
+        st21:     { pos: new THREE.Vector3(135, 6.5, -11.8), look: new THREE.Vector3(143.5, 1.3, -3.0) },
+        st24:     { pos: new THREE.Vector3(157, 6.0, -11.5), look: new THREE.Vector3(164.5, 1.2, -3.8) },
+        st32:     { pos: new THREE.Vector3(212, 6.0, -11.5), look: new THREE.Vector3(220.5, 1.3, -3.0) },
+        agv:      { pos: new THREE.Vector3(65, 5.5, -12.5), look: new THREE.Vector3(82, 1.0, -6.2) },
+        drone:    { pos: new THREE.Vector3(140, 32, 58), look: new THREE.Vector3(140, 2, 0) },
+      };
+
+      const tgt = targets[preset] || targets.overview;
+      camAnim = {
+        startPos: camera.position.clone(),
+        endPos: tgt.pos,
+        startLook: controls.target.clone(),
+        endLook: tgt.look,
+        t: 0
+      };
+
+      if (preset === 'st16') updateStationInspector(16);
+      if (preset === 'st21') updateStationInspector(21);
+      if (preset === 'st24') updateStationInspector(24);
+      if (preset === 'st32') updateStationInspector(32);
+    };
+
+    window.setSimMode = function(mode) {
+      currentMode = mode;
+      document.getElementById('btn-mode-baseline').className = 'btn' + (mode === 'baseline' ? ' active-baseline' : '');
+      document.getElementById('btn-mode-anylogic2d').className = 'btn' + (mode === 'anylogic2d' ? ' active-anylogic2d' : '');
+      document.getElementById('btn-mode-optimized').className = 'btn' + (mode === 'optimized' ? ' active-optimized' : '');
+
+      const banner = document.getElementById('blindspot-banner');
+      banner.style.display = (mode === 'anylogic2d') ? 'block' : 'none';
+
+      if (mode === 'anylogic2d') {
+        // Top-down orthographic-like camera showing traditional 2D simulation blindspot
+        camAnim = {
+          startPos: camera.position.clone(),
+          endPos: new THREE.Vector3(140, 125, 0.1),
+          startLook: controls.target.clone(),
+          endLook: new THREE.Vector3(140, 0, 0),
+          t: 0
+        };
+        addTerminalLog('[视角切换] 已切至传统 AnyLogic 2D 抽象俯视视角：三维高度与立柱碰撞笼被掩盖。', '#fcd34d');
+      } else if (mode === 'baseline') {
+        activeAgvCount = 6;
+        rackScaleXY = 1.0;
+        document.getElementById('slider-agv-count').value = 6;
+        document.getElementById('lbl-agv-count').textContent = '6 台';
+        document.getElementById('slider-rack-scale').value = 1.0;
+        document.getElementById('lbl-rack-scale').textContent = '1.00x (基准)';
+        if (camera.position.y > 95) window.flyToCamera('overview');
+      } else if (mode === 'optimized') {
+        activeAgvCount = 36;
+        rackScaleXY = 1.0;
+        document.getElementById('slider-agv-count').value = 36;
+        document.getElementById('lbl-agv-count').textContent = '36 台';
+        document.getElementById('slider-rack-scale').value = 1.0;
+        document.getElementById('lbl-rack-scale').textContent = '1.35m 双层流利架';
+        if (camera.position.y > 95) window.flyToCamera('overview');
+      }
+
+      recomputeAndRenderState();
+    };
+
+    window.onParadoxSliderChange = function() {
+      rackScaleXY = parseFloat(document.getElementById('slider-rack-scale').value);
+      taktSec = parseInt(document.getElementById('slider-takt').value, 10);
+      activeAgvCount = parseInt(document.getElementById('slider-agv-count').value, 10);
+
+      document.getElementById('lbl-rack-scale').textContent = `${rackScaleXY.toFixed(2)}x`;
+      document.getElementById('lbl-takt').textContent = `${taktSec}s (${Math.round(3600 / taktSec)} JPH)`;
+      document.getElementById('lbl-agv-count').textContent = `${activeAgvCount} 台`;
+
+      if (currentMode === 'optimized' && rackScaleXY !== 1.0) {
+        currentMode = 'baseline';
+        document.getElementById('btn-mode-baseline').className = 'btn active-baseline';
+        document.getElementById('btn-mode-optimized').className = 'btn';
+      }
+      recomputeAndRenderState();
+    };
+
+    window.onStationOffsetEdit = function(val) {
+      const num = parseFloat(val);
+      document.getElementById('lbl-st-offset').textContent = `+${num.toFixed(1)}m`;
+      const obj = stationObjects.find(o => o.st.id === selectedStationId);
+      if (obj) {
+        obj.customOffsetX = num;
+        recomputeAndRenderState();
+      }
+    };
+
+    window.selectStationIn3D = function(stId) {
+      if (stId <= 0) {
+        window.flyToCamera('overview');
+        return;
+      }
+      const obj = stationObjects.find(o => o.st.id === stId);
+      if (obj) {
+        document.getElementById('slider-st-offset').value = obj.customOffsetX;
+        document.getElementById('lbl-st-offset').textContent = `+${obj.customOffsetX.toFixed(1)}m`;
+        updateStationInspector(stId);
+        camAnim = {
+          startPos: camera.position.clone(),
+          endPos: new THREE.Vector3(obj.cx - 7.5, 7.5, -13.5),
+          startLook: controls.target.clone(),
+          endLook: new THREE.Vector3(obj.cx, 1.4, -2.5),
+          t: 0
+        };
+      }
+    };
+
+    window.toggleRoofTrusses = function(show) {
+      roofTrussGroup.visible = show;
+    };
+
+    window.toggle3DLabels = function(show) {
+      labelSprites.forEach(item => { item.sprite.visible = show; });
+    };
+
+    window.toggleCompareModal = function(show) {
+      document.getElementById('compare-modal').style.display = show ? 'flex' : 'none';
+    };
+
+    // Automated Step-by-Step 3D Agent Closed-Loop Walkthrough
+    window.runAgentClosedLoop = function() {
+      addTerminalLog('========================================', '#76b900');
+      addTerminalLog('⚡ 启动 SeresLogisticsPlanningAgent 双向闭环调优...', '#a3e635');
+
+      // Step 1: Fly to Station 16 Column Collision
+      window.setSimMode('baseline');
+      window.flyToCamera('st16');
+      addTerminalLog('[阶段1: 3D 空间干涉诊断] 镜头定位工位 16：二排座椅料架与承重柱 Col_108_p4 发生穿透！', '#fda4af');
+
+      // Step 2: Fly to Station 24 Battery Rack AGV Encroachment
+      setTimeout(() => {
+        window.flyToCamera('st24');
+        addTerminalLog('[阶段2: ISO 3691-4 净距诊断] 镜头定位工位 24：100kWh 电池料架深达 2.0m，侵占 AGV 走廊(净距仅 0.30m)！', '#fcd34d');
+      }, 1800);
+
+      // Step 3: Apply OpenUSD Parametric Mutation & Z-Axis Dual-Tier Refactor
+      setTimeout(() => {
+        window.setSimMode('optimized');
+        addTerminalLog('[阶段3: OpenUSD 代码化重构] Agent 自动写入 xformOp:translate 偏移 +2.2m 避让立柱；将平铺架升级为 1.35m 双层立式流利架！', '#67e8f9');
+        addTerminalLog('[阶段4: AnyLogic 运筹重构] 启用 3 处区域 SPS 超市 + 36 台 1拖4 水蜘蛛牵引列车！', '#6ee7b7');
+      }, 3600);
+
+      // Step 4: Return to Overview showing 100% Green Compliant Factory
+      setTimeout(() => {
+        window.flyToCamera('overview');
+        addTerminalLog('✅ [双向闭环验收通过] 柱体碰撞: 0 | 通道侵占: 0 (100% 放得下) | 缺料停线: 0 (100% 来得及)！', '#a3e635');
+      }, 5400);
+    };
+
+    // =========================================================================
+    // 9. 3D RAYCASTING (CLICK ANY WORKSTATION / RACK / VEHICLE IN 3D)
+    // =========================================================================
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let downPos = { x: 0, y: 0 };
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      downPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6) return;
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(pickableMeshes, false);
+      if (hits.length > 0) {
+        const stId = hits[0].object.userData.stationId;
+        if (stId) {
+          window.selectStationIn3D(stId);
+        }
+      }
+    });
+
+    // =========================================================================
+    // 10. REAL-TIME 60 FPS RENDER & ANIMATION LOOP
+    // =========================================================================
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (isDirectorActive) return;
+      const dt = clock.getDelta();
+      const elapsed = clock.getElapsedTime();
+
+      // 1. Camera Smooth Fly-To Interpolation
+      if (camAnim) {
+        camAnim.t += dt * 1.8;
+        const k = Math.min(1, 1 - Math.pow(1 - Math.min(1, camAnim.t), 3));
+        camera.position.lerpVectors(camAnim.startPos, camAnim.endPos, k);
+        controls.target.lerpVectors(camAnim.startLook, camAnim.endLook, k);
+        if (camAnim.t >= 1) camAnim = null;
+      } else if (autoOrbitDrone) {
+        const angle = elapsed * 0.18;
+        camera.position.x = 140 + Math.cos(angle) * 95;
+        camera.position.z = Math.sin(angle) * 75;
+        camera.position.y = 36 + Math.sin(elapsed * 0.4) * 6;
+        controls.target.set(140, 2, 0);
+      }
+
+      controls.update();
+
+      // 2. Animate 40 Vehicles slowly advancing along the 280m Skillet Conveyor
+      const beltOffset = (elapsed * 0.45) % 7.0;
+      vehicleGroups.forEach((v) => {
+        v.mesh.position.x = v.baseX + beltOffset - 3.5;
+      });
+
+      // 3. Animate 6-Axis Industrial Robots
+      robotJoints.forEach((piv, idx) => {
+        piv.rotation.y = Math.sin(elapsed * 2.2 + idx) * 0.55;
+      });
+
+      // 4. Animate Active AGV Fleet along North (Z = -6.2) & South (Z = +6.2) Highways
+      const isOpt = (currentMode === 'optimized');
+      const speed = (60 / taktSec) * (isOpt ? 12.0 : 7.5);
+      agvPool.forEach((agv, idx) => {
+        agv.unit.visible = idx < activeAgvCount;
+        if (!agv.unit.visible) return;
+
+        agv.trailersGroup.visible = isOpt;
+        agv.tractor.material = isOpt ? MATS.agvTeal : MATS.agvPurple;
+
+        agv.progress = (agv.progress + dt * speed) % 276;
+        const dir = agv.laneNorth ? 1 : -1;
+        const xPos = agv.laneNorth ? (4 + agv.progress) : (280 - agv.progress);
+        const zPos = agv.laneNorth ? -6.2 : 6.2;
+
+        agv.unit.position.set(xPos, 0, zPos);
+        agv.unit.rotation.y = dir > 0 ? 0 : Math.PI;
+      });
+
+      // 5. Pulse Collision Hazard Cages
+      const pulse = 0.25 + 0.18 * Math.sin(elapsed * 5.0);
+      MATS.collisionRedBox.opacity = pulse;
+      MATS.encroachAmberBox.opacity = pulse;
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / (window.innerHeight - 54);
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight - 54);
+    });
+
+    // =========================================================================
+    // 11. 3-MINUTE GUIDED PRESENTATION DIRECTOR & AUTOMATED PANEL CHOREOGRAPHY
+    // =========================================================================
+    const DIRECTOR_TOTAL_SEC = 218.94;
+    const DIRECTOR_CHAPTERS = [
+      {
+        id: 1, start: 0.00, end: 26.47,
+        badge: '第一部分 · 项目核心亮点与架构 (1/5)',
+        title: '赛力斯超级工厂总装线边物流：60秒极速节拍下的“双向拷问”',
+        focusRect: { top: 68, left: 10, width: 314, height: 192, label: '👆 核心指标面板：放得下 × 来得及' },
+        bullets: [
+          '对标赛力斯龙兴超级工厂（问界 M9/M7 总装车间），主线全长 280 米，涵盖 40 个标准工位',
+          '双核协同架构：NVIDIA Omniverse 3D 物理空间严控（放得下）⟷ AnyLogic 离散事件排产（来得及）',
+          '由工业 AI Agent 闭环驱动，解决高节拍新能源整车制造中最棘手的线边物流规划难题'
+        ],
+        subs: [
+          '大家好！欢迎来到赛力斯超级工厂总装车间线边物流三维数字孪生平台。',
+          '在问界 M9 等车型以 60 秒一台的极速节拍量产时，40 个工位、80 座料架面临两个终极拷问：',
+          '第一，三维物理空间能不能放得下？第二，动态物料配送能不能来得及？',
+          '为此，我们构建了融合 NVIDIA Omniverse 空间严控、AnyLogic 离散事件推演与 AI Agent 自主寻优的双向闭环架构。'
+        ]
+      },
+      {
+        id: 2, start: 26.47, end: 49.77,
+        badge: '第一部分 · 项目核心亮点与架构 (2/5)',
+        title: '核心亮点一：打破传统 AnyLogic 2D 仿真的“三维物理盲区”',
+        focusRect: { top: 8, left: 660, width: 520, height: 42, label: '👆 自动操作：切换 2D 盲区视角 vs 3D 物理视角' },
+        bullets: [
+          '传统 AnyLogic 2D 仿真仅将工位简化为平面逻辑节点，完全忽略厂房立柱与三维高程',
+          '在本面板一键切换「传统 2D 盲区视角」与「Omniverse 3D 物理视角」，直观揭示二维规划隐患',
+          '彻底杜绝“在 2D 仿真里绿灯通过，到现场设备落位时却撞上厂房承重钢柱”的工程事故'
+        ],
+        subs: [
+          '第一个核心亮点，是打破传统 AnyLogic 二维仿真的三维空间盲区。',
+          '现在我们点击顶部切换到传统 AnyLogic 2D 盲区视角：传统仿真只把工位当作平面方块，完全看不见 18 米跨度的承重钢柱。',
+          '而切回 Omniverse 真三维视角时，物理真相立刻浮现：多处静态大料架直接与蓝色厂房承重钢柱发生了严重碰撞！'
+        ]
+      },
+      {
+        id: 3, start: 49.77, end: 75.16,
+        badge: '第一部分 · 项目核心亮点与架构 (3/5)',
+        title: '核心亮点二：毫米级 3D 几何干涉与 ISO 3691-4 通道净距严控',
+        focusRect: { top: 64, left: 332, width: 620, height: 38, label: '👆 自动操作：切换 RTX 3D 冲突特写机位' },
+        bullets: [
+          '工位 16（零重力座椅）、工位 21（前副车架）、工位 34（车门分装）检出 5 处承重钢柱硬碰撞',
+          '工位 24（100kWh 巨鲸电池）、工位 32（21寸轮胎）料架深达 2.0m，越过地面安全黄线',
+          '实测 AGV 通道安全净距仅 0.30m，违反 ISO 3691-4 工业标准（要求净距 ≥ 0.50m）'
+        ],
+        subs: [
+          '第二个亮点，是基于 OpenUSD 与 PhysX 5 的毫米级三维空间审计。',
+          '点击机位飞到工位 16 特写：红色碰撞笼内，二排零重力座椅料架直接穿透了 108 米处的承重钢柱。',
+          '再点击飞到工位 24 巨鲸电池合装区：深达 2 米的重型电池料架越过了地面黄色安全界线，AGV 通道净距仅剩 0.3 米，违反 ISO 安全规范。'
+        ]
+      },
+      {
+        id: 4, start: 75.16, end: 99.83,
+        badge: '第一部分 · 项目核心亮点与架构 (4/5)',
+        title: '核心亮点三：线边仓位“空间 vs 产能”结构性矛盾交互沙盒',
+        focusRect: { top: 268, left: 10, width: 314, height: 295, label: '👆 自动拖动滑块：实时验证空间与产能死锁' },
+        bullets: [
+          '左侧交互沙盒支持实时拖动「料架扩容系数」、「产线节拍」与「AGV 车队规模」滑块',
+          '放大单层料架 (1.45x) 虽能增加缓存，但在 3D 视口内瞬间引发 13 处钢柱穿透与走廊堵塞',
+          '缩小单层料架 (0.70x) 虽能腾出空间，却导致单架仅够支撑 1 台车，引发上万次缺料停线'
+        ],
+        subs: [
+          '为什么线边仓位规划这么难？我们操作左侧的矛盾沙盒来直观验证：',
+          '如果为了不断料，拖动滑块把单层料架放大到 1.45 倍，三维场景中料架剧烈膨胀，碰撞与侵占瞬间飙升到 15 处，根本放不下！',
+          '反过来，如果把料架缩小到 0.7 倍，线边库存瞬间耗尽，缺料停线暴增到一万一千多次！单靠平面妥协根本无法解开这一死锁。'
+        ]
+      },
+      {
+        id: 5, start: 99.83, end: 124.69,
+        badge: '第一部分 · 项目核心亮点与架构 (5/5)',
+        title: '核心亮点四：Agent 驱动 OpenUSD 代码化生成，建模效率提升 10 倍',
+        focusRect: { top: 285, left: 1566, width: 344, height: 345, label: '👆 自动调节 USD 参数：3D 几何与代码同步刷新' },
+        bullets: [
+          '告别传统仿真数周的人工拖拽：基于 Python pxr.Usd API，3 秒自动生成 40 工位完整 3D 资产',
+          '点击任意 3D 工位即可在右侧检视 OpenUSD 场景树与实时 .usda 源码（含碰撞 Schema 与材质绑定）',
+          '拖动右侧「实时避柱偏移」滑块 (+0.0m → +2.2m)，3D 料架与底层 USD 代码同步实时刷新'
+        ],
+        subs: [
+          '第四个亮点，是 Agent 驱动的 OpenUSD 代码化建模。',
+          '传统软件手工拖拽 40 个工位需两三周，而本项目读取工程 BOM 后调用 OpenUSD 接口，3 秒即可生成全厂三维资产。',
+          '我们在右侧属性面板拖动偏移滑块到正 2.2 米，三维座椅料架立刻平滑移出钢柱碰撞区，底层 USD 代码也同步实时刷新，建模效率提升 10 倍以上。'
+        ]
+      },
+      {
+        id: 6, start: 124.69, end: 150.60,
+        badge: '第二部分 · 实际工业场景核心价值 (1/2)',
+        title: '工业价值一：AI Agent 双向闭环自愈，一键达成“零干涉、零停线”',
+        focusRect: { top: 8, left: 1185, width: 205, height: 42, label: '👆 触发 AI Agent 双向闭环调优' },
+        bullets: [
+          '空间重构：自动对干涉工位注入 +2.2m 避柱位移，并将 2.0m 平铺架升级为 1.35m Z 轴双层立式流利架',
+          '运筹重构：打破单主库 180m 运距瓶颈，部署 3 处区域 SPS 超市 + 36 台 1拖4 水蜘蛛牵引列车',
+          '闭环成效：3D 空间合规率由 91.2% 跃升至 100%，2 小时班次缺料停线由 8,174 次清零为 0 次！'
+        ],
+        subs: [
+          '现在我们点击顶部「启动 AI Agent 3D 自动调优」按钮，看它如何创造工业价值！',
+          'Agent 立即向三维 Z 轴要空间，将 2 米深的平铺料架重构为 1.35 米深的双层立式流利架，容量翻倍且通道净距恢复至 0.72 米；',
+          '同时启用三座区域 SPS 超市和 36 台一拖四水蜘蛛牵引列车，将 8,174 次停线彻底清零，一键达成百分百放得下、百分百来得及！'
+        ]
+      },
+      {
+        id: 7, start: 150.60, end: 167.85,
+        badge: '第二部分 · 实际工业场景核心价值 (2/2)',
+        title: '工业价值二：规避百万级现场返工，精准赋能超级工厂降本增效',
+        focusRect: { top: 8, left: 1395, width: 195, height: 42, label: '👆 核心技术代差对比矩阵' },
+        bullets: [
+          '规避产线改造返工：在数字规划阶段消灭全部立柱碰撞与安全违规，节省现场二次施工成本数百万元',
+          '保障高节拍满产交付：单趟物料往返耗时由 170 秒压缩至 58 秒，消除价值数亿元产线的断料停摆风险',
+          '精准指导资产采购：在 93.7% 均衡负荷率下锁定 36 台水蜘蛛最优车队规模，避免盲目采购浪费'
+        ],
+        subs: [
+          '在实际整车工程中，本平台带来三大直接价值：第一，在设备落位前消灭全部立柱碰撞与通道违规，规避数百万元的现场返工损失；',
+          '第二，将单趟配送往返耗时从 170 秒压至 58 秒，保障每小时 60 台的高节拍满产交付；',
+          '第三，在 93.7% 的均衡负荷下精准锁定 36 台水蜘蛛最优配额，避免盲目采购浪费。'
+        ]
+      },
+      {
+        id: 8, start: 167.85, end: 193.48,
+        badge: '第三部分 · 未来演进与宏伟期许 (1/2)',
+        title: '未来期许一：迈向生成式全厂数字主线与实时 IoT 虚实共生',
+        focusRect: { top: 64, left: 1225, width: 325, height: 38, label: '👆 开启顶棚钢桁架与全厂无人机巡检' },
+        bullets: [
+          '横向贯通四大工艺：从总装车间延伸至冲压、焊装、涂装及场外智慧物流园区的全厂级 OpenUSD 底座',
+          '生成式 AI 布局寻优：支持工程师以自然语言输入新车型 BOM，Agent 自动生成多套帕累托最优 3D 产线方案',
+          '实时 IoT 虚实同步：直连工厂 MES、LES 与 AGV 调度系统 (RCS)，实现秒级孪生监控与动态重调度'
+        ],
+        subs: [
+          '展望未来，我们怀揣两大演进期许。首先，是从单一车间迈向全厂级生成式数字底座。勾选显示厂房顶棚钢桁架并开启无人机环绕漫游：',
+          '未来我们将通过统一 OpenUSD 总线贯通冲压、焊装、涂装、总装四大工艺；',
+          '支持自然语言输入新车型 BOM 自动生成帕累托最优 3D 布局，并直连现场 MES 与 AGV 调度系统，实现实时虚实共生。'
+        ]
+      },
+      {
+        id: 9, start: 193.48, end: 218.94,
+        badge: '第三部分 · 未来演进与宏伟期许 (2/2)',
+        title: '未来期许二：无缝衔接 NVIDIA Isaac Sim，赋能具身智能超级工厂',
+        focusRect: { top: 640, left: 1566, width: 344, height: 390, label: '👆 OpenUSD + Isaac Sim 具身智能演进' },
+        bullets: [
+          '原生兼容 NVIDIA Isaac Sim：本项目生成的 .usda 场景与 PhysX 5 物理属性可直接载入 Isaac Sim',
+          '人机混行与具身智能训练：支持在孪生产线中训练自主移动机器人 (AMR) 与工业人形机器人线边拣选上料',
+          '终极愿景：构建“软件定义、AI 自进化、零碰撞、零停线”的下一代新能源汽车智慧超级工厂！'
+        ],
+        subs: [
+          '第二个期许，是无缝衔接 NVIDIA Isaac Sim，全面拥抱具身智能。',
+          '依托本项目原生生成的 OpenUSD 与 PhysX 5 物理资产，整座车间可直接导入 Isaac Sim，用于训练视觉 AMR 与工业人形机器人执行线边分拣与装配。',
+          '从空间严控、动态保供到具身智能进化，我们将持续助力赛力斯打造下一代智慧超级工厂！感谢观看！'
+        ]
+      }
+    ];
+
+    let isDirectorActive = false;
+    let directorAudio = null;
+
+    function formatMMSS(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+    }
+
+    window.setDirectorTime = function(t) {
+      isDirectorActive = true;
+      camAnim = null;
+      autoOrbitDrone = false;
+
+      const clampedT = Math.max(0, Math.min(DIRECTOR_TOTAL_SEC - 0.01, t));
+      const ch = DIRECTOR_CHAPTERS.find(c => clampedT >= c.start && clampedT < c.end) || DIRECTOR_CHAPTERS[DIRECTOR_CHAPTERS.length - 1];
+      const p = Math.max(0, Math.min(1, (clampedT - ch.start) / (ch.end - ch.start)));
+
+      // 1. Show & populate Talking-Point Card
+      const card = document.getElementById('director-card');
+      card.style.display = 'block';
+      document.getElementById('dir-badge').textContent = ch.badge;
+      document.getElementById('dir-step-tag').textContent = `🎙️ 章节 ${ch.id}/9 · 进度 ${Math.round(p * 100)}%`;
+      document.getElementById('dir-title').textContent = ch.title;
+      document.getElementById('dir-bullets').innerHTML = ch.bullets.map(b => `<li>${b}</li>`).join('');
+
+      // 2. Show & populate Synchronized Subtitle Bar
+      const subBar = document.getElementById('director-subtitle-bar');
+      subBar.style.display = 'block';
+      const subIdx = Math.min(ch.subs.length - 1, Math.floor(p * ch.subs.length));
+      document.getElementById('dir-sub-text').textContent = ch.subs[subIdx];
+      document.getElementById('dir-prog-fill').style.width = `${((clampedT / DIRECTOR_TOTAL_SEC) * 100).toFixed(1)}%`;
+      document.getElementById('dir-sub-time').textContent = `${formatMMSS(clampedT)} / ${formatMMSS(DIRECTOR_TOTAL_SEC)}`;
+
+      // 3. Position Glowing Panel Focus Ring
+      const ring = document.getElementById('director-focus-ring');
+      if (ch.focusRect) {
+        ring.style.display = 'block';
+        ring.style.top = ch.focusRect.top + 'px';
+        ring.style.left = ch.focusRect.left + 'px';
+        ring.style.width = ch.focusRect.width + 'px';
+        ring.style.height = ch.focusRect.height + 'px';
+        document.getElementById('dir-focus-label').textContent = ch.focusRect.label;
+      } else {
+        ring.style.display = 'none';
+      }
+
+      // Reset default modal & roof states before chapter-specific overrides
+      window.toggleCompareModal(false);
+      document.getElementById('chk-roof').checked = false;
+      window.toggleRoofTrusses(false);
+      stationObjects[15].customOffsetX = 0;
+      document.getElementById('slider-st-offset').value = 0;
+      document.getElementById('lbl-st-offset').textContent = '+0.0m';
+
+      // 4. Execute Chapter-Specific Panel Operations & 3D Camera Choreography
+      if (ch.id === 1) {
+        // Chapter 1: Sweeping 3D overview of Baseline Factory
+        if (currentMode !== 'baseline') window.setSimMode('baseline');
+        camera.position.set(72 + p * 34, 28 - p * 4, 48 - p * 10);
+        controls.target.set(135 + p * 10, 1.5, 0);
+      } else if (ch.id === 2) {
+        // Chapter 2: Switch to AnyLogic 2D Blindspot View -> back to Baseline 3D
+        if (p < 0.54) {
+          if (currentMode !== 'anylogic2d') window.setSimMode('anylogic2d');
+          camera.position.set(140, 122, 0.1);
+          controls.target.set(140, 0, 0);
+        } else {
+          if (currentMode !== 'baseline') window.setSimMode('baseline');
+          const subP = (p - 0.54) / 0.46;
+          camera.position.set(95 + subP * 12, 14 - subP * 6, -24 + subP * 10);
+          controls.target.set(112, 1.4, -3.0);
+        }
+      } else if (ch.id === 3) {
+        // Chapter 3: Close-up of St.16 Column Collision -> St.24 Battery AGV Encroachment
+        if (currentMode !== 'baseline') window.setSimMode('baseline');
+        if (p < 0.50) {
+          const subP = p / 0.50;
+          updateStationInspector(16);
+          camera.position.set(100 + subP * 5, 6.2 - subP * 0.8, -11.8 + subP * 1.5);
+          controls.target.set(108.5, 1.3, -3.2);
+        } else {
+          const subP = (p - 0.50) / 0.50;
+          updateStationInspector(24);
+          camera.position.set(156 + subP * 5, 6.0 - subP * 0.8, -11.8 + subP * 1.5);
+          controls.target.set(164.5, 1.2, -3.8);
+        }
+      } else if (ch.id === 4) {
+        // Chapter 4: Operate Left Space-Throughput Paradox Sliders (1.0x -> 1.45x -> 0.70x)
+        if (currentMode !== 'baseline') window.setSimMode('baseline');
+        let targetScale = 1.0;
+        if (p < 0.52) {
+          targetScale = 1.0 + (p / 0.52) * 0.45; // 1.00x -> 1.45x
+        } else {
+          targetScale = 1.45 - ((p - 0.52) / 0.48) * 0.75; // 1.45x -> 0.70x
+        }
+        document.getElementById('slider-rack-scale').value = targetScale.toFixed(2);
+        window.onParadoxSliderChange();
+        camera.position.set(118 + p * 18, 13.5, -21);
+        controls.target.set(136, 1.5, -2.5);
+      } else if (ch.id === 5) {
+        // Chapter 5: Operate Right OpenUSD Prim Offset Slider (+0.0m -> +2.2m on Station 16)
+        if (currentMode !== 'baseline') window.setSimMode('baseline');
+        updateStationInspector(16);
+        const shiftVal = Math.min(2.2, Math.max(0, (p - 0.15) / 0.70 * 2.2));
+        document.getElementById('slider-st-offset').value = shiftVal.toFixed(1);
+        window.onStationOffsetEdit(shiftVal);
+        camera.position.set(101 + p * 4, 6.2, -11.5);
+        controls.target.set(109.5, 1.3, -3.2);
+      } else if (ch.id === 6) {
+        // Chapter 6: Trigger AI Agent 3D Closed-Loop Optimization
+        if (currentMode !== 'optimized') window.setSimMode('optimized');
+        camera.position.set(92 + p * 35, 18 + p * 6, 32 + p * 10);
+        controls.target.set(145, 1.5, 2);
+      } else if (ch.id === 7) {
+        // Chapter 7: Industrial Value (St.32 Robot + AGV Train -> Comparison Matrix Modal)
+        if (currentMode !== 'optimized') window.setSimMode('optimized');
+        if (p < 0.48) {
+          const subP = p / 0.48;
+          updateStationInspector(32);
+          camera.position.set(210 + subP * 6, 6.2, -12.0);
+          controls.target.set(220.5, 1.3, -3.2);
+        } else {
+          window.toggleCompareModal(true);
+          camera.position.set(86, 26, 42);
+          controls.target.set(142, 1.5, 0);
+        }
+      } else if (ch.id === 8) {
+        // Chapter 8: Future Vision 1 - Enable Roof Steel Trusses & Drone Orbit
+        if (currentMode !== 'optimized') window.setSimMode('optimized');
+        document.getElementById('chk-roof').checked = true;
+        window.toggleRoofTrusses(true);
+        const angle = p * 1.35 - 0.4;
+        camera.position.set(140 + Math.cos(angle) * 82, 30, Math.sin(angle) * 62);
+        controls.target.set(140, 2, 0);
+      } else if (ch.id === 9) {
+        // Chapter 9: Future Vision 2 - Isaac Sim Embodied AI & Robot/AGV Close-Up Glide
+        if (currentMode !== 'optimized') window.setSimMode('optimized');
+        camera.position.set(95 + p * 65, 8.5 + p * 4, -14.5);
+        controls.target.set(110 + p * 65, 1.4, -2.0);
+      }
+
+      controls.update();
+
+      // 5. Deterministically step 3D animations (vehicles, robots, AGVs, collision pulses) for time t
+      const beltOffset = (clampedT * 0.65) % 7.0;
+      vehicleGroups.forEach((v) => {
+        v.mesh.position.x = v.baseX + beltOffset - 3.5;
+      });
+      robotJoints.forEach((piv, idx) => {
+        piv.rotation.y = Math.sin(clampedT * 2.5 + idx) * 0.55;
+      });
+      const isOpt = (currentMode === 'optimized');
+      const speed = (60 / taktSec) * (isOpt ? 12.0 : 7.5);
+      agvPool.forEach((agv, idx) => {
+        agv.unit.visible = idx < activeAgvCount;
+        if (!agv.unit.visible) return;
+        agv.trailersGroup.visible = isOpt;
+        agv.tractor.material = isOpt ? MATS.agvTeal : MATS.agvPurple;
+        const prog = ((idx * 29.5) + clampedT * speed) % 276;
+        const dir = agv.laneNorth ? 1 : -1;
+        const xPos = agv.laneNorth ? (4 + prog) : (280 - prog);
+        const zPos = agv.laneNorth ? -6.2 : 6.2;
+        agv.unit.position.set(xPos, 0, zPos);
+        agv.unit.rotation.y = dir > 0 ? 0 : Math.PI;
+      });
+      const pulse = 0.25 + 0.18 * Math.sin(clampedT * 5.5);
+      MATS.collisionRedBox.opacity = pulse;
+      MATS.encroachAmberBox.opacity = pulse;
+
+      renderer.render(scene, camera);
+    };
+
+    window.togglePresentationTour = function() {
+      const btn = document.getElementById('btn-tour');
+      if (directorAudio && !directorAudio.paused) {
+        directorAudio.pause();
+        isDirectorActive = false;
+        document.getElementById('director-card').style.display = 'none';
+        document.getElementById('director-subtitle-bar').style.display = 'none';
+        document.getElementById('director-focus-ring').style.display = 'none';
+        btn.textContent = '🎬 3分钟讲解演示';
+        return;
+      }
+      if (!directorAudio) {
+        directorAudio = new Audio('video_assets/master_narration.wav');
+        directorAudio.addEventListener('ended', () => {
+          isDirectorActive = false;
+          btn.textContent = '🎬 3分钟讲解演示';
+        });
+      }
+      directorAudio.currentTime = 0;
+      directorAudio.play();
+      isDirectorActive = true;
+      btn.textContent = '⏹️ 停止讲解演示';
+
+      function syncLoop() {
+        if (!isDirectorActive || !directorAudio || directorAudio.paused) return;
+        window.setDirectorTime(directorAudio.currentTime);
+        requestAnimationFrame(syncLoop);
+      }
+      requestAnimationFrame(syncLoop);
+    };
+
+    // Initialize default view & support URL deep-links (?mode=optimized&cam=st16&modal=compare&instant=1&directorTime=15.0)
+    recomputeAndRenderState();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('directorTime') !== null) {
+      window.setDirectorTime(parseFloat(urlParams.get('directorTime')));
+    } else {
+      if (urlParams.get('mode')) {
+        window.setSimMode(urlParams.get('mode'));
+      }
+      if (urlParams.get('cam')) {
+        window.flyToCamera(urlParams.get('cam'));
+        if (urlParams.get('instant') === '1' && camAnim) {
+          camera.position.copy(camAnim.endPos);
+          controls.target.copy(camAnim.endLook);
+          camAnim = null;
+          controls.update();
+        }
+      }
+      if (urlParams.get('modal') === 'compare') {
+        window.toggleCompareModal(true);
+      }
+      animate();
+    }
+  </script>
+</body>
+</html>
